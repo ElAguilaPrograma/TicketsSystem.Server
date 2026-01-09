@@ -10,6 +10,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using TicketsSystem.Core.Models;
+using Microsoft.AspNetCore.Http;
 
 
 namespace TicketsSystem.Core.Services
@@ -17,7 +18,7 @@ namespace TicketsSystem.Core.Services
     public interface IUserService
     {
         Task<UserResponse> CreateNewUserAsync(UserDTO userDTO);
-        Task<IEnumerable<UserDTO>> GetAllUsersAsync();
+        Task<UserResponse> GetAllUsersAsync();
         Task<LoginResponse> LoginAsync(LoginRequest request);
     }
 
@@ -42,19 +43,37 @@ namespace TicketsSystem.Core.Services
             _config = configuration;
         }
 
-        public async Task<IEnumerable<UserDTO>> GetAllUsersAsync()
+        public async Task<UserResponse> GetAllUsersAsync()
         {
-            var users = await _userRepository.GetAllUsers();
-            IEnumerable<UserDTO> userDTOs = users.Select(u => new UserDTO
+            try
             {
-                FullName = u.FullName,
-                Email = u.Email,
-                Password = " ",
-                Role = u.Role,
-                IsActive = u.IsActive,
-                CreatedAt = u.CreatedAt
-            });
-            return userDTOs;
+                var users = await _userRepository.GetAllUsers();
+                IEnumerable<UserDTO> userDTOs = users.Select(u => new UserDTO
+                {
+                    FullName = u.FullName,
+                    Email = u.Email,
+                    Password = " ",
+                    Role = u.Role,
+                    IsActive = u.IsActive,
+                    CreatedAt = u.CreatedAt
+                });
+
+                return new UserResponse
+                {
+                    Success = true,
+                    Message = "Users successfully recovered.",
+                    Users = userDTOs
+                };
+            }
+            catch (Exception)
+            {
+                return new UserResponse
+                {
+                    Success = false,
+                    Message = "There was a problem recovering the users."
+                };
+            }
+
         }
 
         public async Task<UserResponse> CreateNewUserAsync(UserDTO userDTO)

@@ -22,7 +22,15 @@ namespace TicketsSystem.Controllers
         {
             var users = await _userService.GetAllUsersAsync();
 
-            return Ok(users);
+            if (!users.Success)
+            {
+                return BadRequest(new
+                {
+                    Message = users.Success
+                });
+            }
+
+            return Ok(users.Users);
         }
 
         [HttpPost("createuser")]
