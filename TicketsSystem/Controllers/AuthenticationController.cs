@@ -20,17 +20,12 @@ namespace TicketsSystem.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllUsers()
         {
-            var users = await _userService.GetAllUsersAsync();
+            var result = await _userService.GetAllUsersAsync();
 
-            if (!users.Success)
-            {
-                return BadRequest(new
-                {
-                    Message = users.Success
-                });
-            }
+            if (result.IsFailed)
+                return BadRequest(new { errors = result.Errors.Select(e => e.Message) });
 
-            return Ok(users.Users);
+            return Ok(result.Value);
         }
 
         [HttpPost("createuser")]
@@ -39,15 +34,10 @@ namespace TicketsSystem.Controllers
         {
             var result = await _userService.CreateNewUserAsync(userDTO);
 
-            if (!result.Success)
-            {
-                return BadRequest(new
-                {
-                    message = result.Message
-                });
-            }
+            if (result.IsFailed)
+                return BadRequest(new { errors = result.Errors.Select(e => e.Message) });
 
-            return Ok(result);
+            return Ok();
         }
 
         [HttpPost("login")]
@@ -55,15 +45,10 @@ namespace TicketsSystem.Controllers
         {
             var result = await _userService.LoginAsync(request);
             
-            if (!result.Success)
-            {
-                return Unauthorized(new
-                {
-                    message = result.Message
-                });
-            }
+            if (result.IsFailed)
+                return Unauthorized(new { message = result.Errors.First().Message });
 
-            return Ok(result);
+            return Ok(result.Value);
         }
     }
 }

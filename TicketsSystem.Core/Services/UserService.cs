@@ -11,15 +11,16 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using TicketsSystem.Core.Models;
 using Microsoft.AspNetCore.Http;
+using FluentResults;
 
 
 namespace TicketsSystem.Core.Services
 {
     public interface IUserService
     {
-        Task<UserResponse> CreateNewUserAsync(UserDTO userDTO);
-        Task<UserResponse> GetAllUsersAsync();
-        Task<LoginResponse> LoginAsync(LoginRequest request);
+        Task<Result> CreateNewUserAsync(UserDTO userDTO);
+        Task<Result<IEnumerable<UserDTO>>> GetAllUsersAsync();
+        Task<Result<LoginSuccessDto>> LoginAsync(LoginRequest request);
     }
 
     public class UserService : IUserService
@@ -43,56 +44,37 @@ namespace TicketsSystem.Core.Services
             _config = configuration;
         }
 
-        public async Task<UserResponse> GetAllUsersAsync()
+        public async Task<Result<IEnumerable<UserDTO>>> GetAllUsersAsync()
         {
-            try
+            var users = await _userRepository.GetAllUsers();
+            IEnumerable<UserDTO> userDTOs = users.Select(u => new UserDTO
             {
-                var users = await _userRepository.GetAllUsers();
-                IEnumerable<UserDTO> userDTOs = users.Select(u => new UserDTO
-                {
-                    FullName = u.FullName,
-                    Email = u.Email,
-                    Password = " ",
-                    Role = u.Role,
-                    IsActive = u.IsActive,
-                    CreatedAt = u.CreatedAt
-                });
+                FullName = u.FullName,
+                Email = u.Email,
+                Password = " ",
+                Role = u.Role,
+                IsActive = u.IsActive,
+                CreatedAt = u.CreatedAt
+            });
 
-                return new UserResponse
-                {
-                    Success = true,
-                    Message = "Users successfully recovered.",
-                    Users = userDTOs
-                };
-            }
-            catch (Exception)
-            {
-                return new UserResponse
-                {
-                    Success = false,
-                    Message = "There was a problem recovering the users."
-                };
-            }
-
+            return Result.Ok(userDTOs);
         }
 
-        public async Task<UserResponse> CreateNewUserAsync(UserDTO userDTO)
+        public async Task<Result> CreateNewUserAsync(UserDTO userDTO)
         {
             if (userDTO == null)
-            {
                 throw new ArgumentNullException("userDto is null");
-            }
-            
+
             var validationResult = await _userValidation.ValidateAsync(userDTO);
             if (!validationResult.IsValid)
             {
                 // throw new ValidationException("One or more fields do not meet the requirements." + validationResult.Errors);
-                return new UserResponse
-                {
-                    Success = false,
-                    Message = "The email or password format is invalid."
-                };
+                var errorMessages = validationResult.Errors.Select(e => e.ErrorMessage);
+                return Result.Fail(errorMessages);
             }
+
+            if (await _userRepository.EmailExist(userDTO.Email))
+                return Result.Fail("The user already exist");
 
             var newUser = new User
             {
@@ -107,54 +89,39 @@ namespace TicketsSystem.Core.Services
 
             await _userRepository.CreateNewUser(newUser);
 
-            return new UserResponse
-            {
-                Success = true,
-                Message = "User created successfully."
-            };
+            return Result.Ok(); //.WithSuccess("User created");
         }
 
-        public async Task<LoginResponse> LoginAsync(LoginRequest request)
+        public async Task<Result<LoginSuccessDto>> LoginAsync(LoginRequest request)
         {
             if (request == null)
-            {
                 throw new ArgumentNullException("Email or password are null");
-            }
 
             var validationResult = await _loginRequestValidation.ValidateAsync(request);
             if (!validationResult.IsValid)
             {
-                return new LoginResponse
-                {
-                    Success = false,
-                    Message = "The email or password format is invalid."
-                };
+                var errorMessage = validationResult.Errors.Select(e => e.ErrorMessage);
+                return Result.Fail(errorMessage);
             }
 
             var user = await _userRepository.Login(request.Email);
 
             if (user == null)
-            {
-                return new LoginResponse { Success = false, Message = "Incorrect credentials" };
-            }
+                return Result.Fail("Incorrect credentials");
 
             var verificationPassword = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
 
             if (verificationPassword != PasswordVerificationResult.Success)
-            {
-                return new LoginResponse { Success = false, Message = "Incorrect credentials" };
-            }
+                return Result.Fail("Incorrect credentials");
 
             var tokenExpiration = DateTime.UtcNow.AddDays(7);
             var token = GenereteJwtToken(user, tokenExpiration);
 
-            return new LoginResponse
+            return Result.Ok(new LoginSuccessDto
             {
-                Success = true,
                 Token = token,
-                Message = "Login success",
                 Expiration = tokenExpiration
-            };
+            });
         }
 
         private string GenereteJwtToken(User user, DateTime expiration)

@@ -4,10 +4,8 @@ using System.Text;
 
 namespace TicketsSystem.Core.Models
 {
-    public class LoginResponse
+    public class LoginSuccessDto
     {
-        public bool Success { get; set; }
-        public string? Message { get; set; }
         public string? Token { get; set; }
         public DateTime? Expiration { get; set; }
     }
