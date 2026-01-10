@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using TicketsSystem.Core.Models;
 using Microsoft.AspNetCore.Http;
 using FluentResults;
+using System.Threading.Tasks;
 
 
 namespace TicketsSystem.Core.Services

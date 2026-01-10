@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Text;
 using TicketsSystem.Core.Services;
 using TicketsSystem.Core.Validations;
+using TicketsSystem.Data.Repositories;
 using TicketsSystem_Data;
 using TicketsSystem_Data.Repositories;
 
@@ -129,14 +130,18 @@ builder.Services.AddDbContext<SystemTicketsContext>(options =>
 
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITicketsRepository, TicketsRepository>();
 
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<ITicketsService, TicketsService>();
+builder.Services.AddScoped<IGetUserRole, GetUserRoleService>();
 
 // Validations
 builder.Services.AddScoped<UserDTOValidator, UserDTOValidator>();
 builder.Services.AddScoped<LoginRequestValidation, LoginRequestValidation>();
+builder.Services.AddScoped<TicketsDTOValidator, TicketsDTOValidator>();
 
 var app = builder.Build();
 

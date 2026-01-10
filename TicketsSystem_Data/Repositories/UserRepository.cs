@@ -18,14 +18,10 @@ namespace TicketsSystem_Data.Repositories
     public class UserRepository: IUserRepository
     {
         private readonly SystemTicketsContext _context;
-        private readonly IConfiguration _configuration;
 
-        public UserRepository(
-            SystemTicketsContext systemTicketsContext, 
-            IConfiguration configuration)
+        public UserRepository(SystemTicketsContext systemTicketsContext)
         {
             _context = systemTicketsContext;
-            _configuration = configuration;
         }
 
         public async Task<IEnumerable<User>> GetAllUsers()
