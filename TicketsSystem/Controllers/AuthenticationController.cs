@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using TicketsSystem.Api.Controllers;
 using TicketsSystem.Core.Services;
 using TicketsSystem.Data.DTOs;
 
@@ -8,7 +9,7 @@ namespace TicketsSystem.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthenticationController : ControllerBase
+    public class AuthenticationController : ApiBaseController
     {
         private readonly IUserService _userService;
         public AuthenticationController(IUserService userService)
@@ -19,84 +20,30 @@ namespace TicketsSystem.Controllers
         [HttpGet("getallusers")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllUsers()
-        {
-            var result = await _userService.GetAllUsersAsync();
-
-            if (result.IsFailed)
-                return BadRequest(new { errors = result.Errors.Select(e => e.Message) });
-
-            return Ok(result.Value);
-        }
+            => ProcessResult(await _userService.GetAllUsersAsync());
 
         [HttpPost("createuser")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateNewUser([FromBody] UserDTO userDTO)
-        {
-            var result = await _userService.CreateNewUserAsync(userDTO);
-
-            if (result.IsFailed)
-                return BadRequest(new { errors = result.Errors.Select(e => e.Message) });
-
-            return Ok();
-        }
+            => ProcessResult(await _userService.CreateNewUserAsync(userDTO));
 
         [HttpPost("updateuser/{userId}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateUserInformation([FromBody] UserDTO userDTO, string userId)
-        {
-            var result = await _userService.UpdateUserInformationAsync(userDTO, userId);
-
-            if (result.IsFailed)
-                return BadRequest(new { errors = result.Errors.Select(e => e.Message) });
-
-            return Ok();
-        }
-
-        [HttpPost("deleteuser/{userId}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteUser(string userId)
-        {
-            var result = await _userService.DeleteUserAsync(userId);
-
-            if (result.IsFailed)
-                return BadRequest(new { errors = result.Errors.Select(e => e.Message) });
-
-            return Ok();
-        }
+            => ProcessResult(await _userService.UpdateUserInformationAsync(userDTO, userId));
 
         [HttpGet("searchuser/{query}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> SearchUser(string query)
-        {
-            var result = await _userService.SearchUserAsync(query);
-
-            if (result.IsFailed)
-                return NotFound(new { errors = result.Errors.Select(e => e.Message) });
-
-            return Ok(result.Value);
-        }
+            => ProcessResult(await _userService.SearchUserAsync(query));
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
-        {
-            var result = await _userService.LoginAsync(request);
-            
-            if (result.IsFailed)
-                return Unauthorized(new { message = result.Errors.First().Message });
-
-            return Ok(result.Value);
-        }
+            => ProcessResult(await _userService.LoginAsync(request));
 
         [HttpPost("deactivateauser/{userId}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeactivateAUser(string userId)
-        {
-            var result = await _userService.DeactivateOrActivateAUserAsync(userId);
-
-            if (result.IsFailed)
-                return BadRequest(new { message = result.Errors.First().Message });
-
-            return Ok();
-        }
+            => ProcessResult(await _userService.DeactivateOrActivateAUserAsync(userId));
     }
 }

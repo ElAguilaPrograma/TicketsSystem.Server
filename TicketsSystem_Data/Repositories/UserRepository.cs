@@ -7,13 +7,13 @@ namespace TicketsSystem_Data.Repositories
     public interface IUserRepository
     {
         Task CreateNewUser(User newUser);
-        Task DeleteUser(User userInfo);
         Task<bool> EmailExist(string email);
         Task<IEnumerable<User>> GetAllUsers();
         Task<User?> GetUserById(Guid userId);
         Task<User?> Login(string email);
         Task<IEnumerable<User>> SearchUsers(string query);
         Task UpdateUserInfo(User userInfo);
+        Task<IEnumerable<Ticket>> UserManagedTickets(Guid userId);
     }
 
     public class UserRepository: IUserRepository
@@ -42,17 +42,14 @@ namespace TicketsSystem_Data.Repositories
             return _context.SaveChangesAsync();
         }
 
-        public Task DeleteUser(User userInfo)
-        {
-            _context.Users.Remove(userInfo);
-            return _context.SaveChangesAsync();
-        }
-
         public Task<User?> Login(string email)
             => _context.Users.FirstOrDefaultAsync(e =>  e.Email == email);
 
         public Task<User?> GetUserById(Guid userId)
             => _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+
+        public async Task<IEnumerable<Ticket>> UserManagedTickets(Guid userId)
+            => await _context.Tickets.Where(t => t.AssignedToUserId == userId).ToListAsync();
 
         public Task<bool> EmailExist(string email)
             => _context.Users.AnyAsync(u => u.Email == email);

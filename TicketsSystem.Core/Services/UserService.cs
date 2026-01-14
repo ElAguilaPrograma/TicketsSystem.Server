@@ -13,6 +13,8 @@ using TicketsSystem.Core.Models;
 using Microsoft.AspNetCore.Http;
 using FluentResults;
 using System.Threading.Tasks;
+using TicketsSystem.Core.Errors;
+using TicketsSystem.Data.Repositories;
 
 
 namespace TicketsSystem.Core.Services
@@ -21,7 +23,6 @@ namespace TicketsSystem.Core.Services
     {
         Task<Result> CreateNewUserAsync(UserDTO userDTO);
         Task<Result> DeactivateOrActivateAUserAsync(string userIdStr);
-        Task<Result> DeleteUserAsync(string userIdStr);
         Task<Result<IEnumerable<UserDTO>>> GetAllUsersAsync();
         Task<Result<LoginSuccessDto>> LoginAsync(LoginRequest request);
         Task<Result<IEnumerable<UserDTO>>> SearchUserAsync(string query);
@@ -35,18 +36,21 @@ namespace TicketsSystem.Core.Services
         private readonly LoginRequestValidation _loginRequestValidation;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IConfiguration _config;
+        private readonly ITicketsRepository _ticketRepository;
         public UserService(
             IUserRepository userRepository,
             UserDTOValidator validationRules,
             IPasswordHasher<User> passwordHasher,
             LoginRequestValidation loginValidationsRules,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ITicketsRepository ticketsRepository)
         {
             _userRepository = userRepository;
             _userValidation = validationRules;
             _passwordHasher = passwordHasher;
             _loginRequestValidation = loginValidationsRules;
             _config = configuration;
+            _ticketRepository = ticketsRepository;
         }
 
         public async Task<Result<IEnumerable<UserDTO>>> GetAllUsersAsync()
@@ -69,18 +73,18 @@ namespace TicketsSystem.Core.Services
         public async Task<Result> CreateNewUserAsync(UserDTO userDTO)
         {
             if (userDTO == null)
-                throw new ArgumentNullException("userDto is null");
+                return Result.Fail(new BadRequestError("userDto is required"));
 
             var validationResult = await _userValidation.ValidateAsync(userDTO);
             if (!validationResult.IsValid)
             {
                 // throw new ValidationException("One or more fields do not meet the requirements." + validationResult.Errors);
-                var errorMessages = validationResult.Errors.Select(e => e.ErrorMessage);
+                var errorMessages = validationResult.Errors.Select(e => new BadRequestError(e.ErrorMessage));
                 return Result.Fail(errorMessages);
             }
 
             if (await _userRepository.EmailExist(userDTO.Email))
-                return Result.Fail("The user already exist");
+                return Result.Fail(new BadRequestError("The user already exist"));
 
             var newUser = new User
             {
@@ -101,27 +105,27 @@ namespace TicketsSystem.Core.Services
         public async Task<Result<LoginSuccessDto>> LoginAsync(LoginRequest request)
         {
             if (request == null)
-                throw new ArgumentNullException("Email or password are null");
+                return Result.Fail(new BadRequestError("Email or password are required"));
 
             var validationResult = await _loginRequestValidation.ValidateAsync(request);
             if (!validationResult.IsValid)
             {
-                var errorMessage = validationResult.Errors.Select(e => e.ErrorMessage);
+                var errorMessage = validationResult.Errors.Select(e => new BadRequestError(e.ErrorMessage));
                 return Result.Fail(errorMessage);
             }
 
             var user = await _userRepository.Login(request.Email);
 
             if (user == null)
-                return Result.Fail("Incorrect credentials");
+                return Result.Fail(new UnauthorizedError("Incorrect credentials"));
 
             if (!user.IsActive)
-                return Result.Fail("User is deactivate");
+                return Result.Fail(new ForbiddenError("User is deactivated"));
 
             var verificationPassword = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
 
             if (verificationPassword != PasswordVerificationResult.Success)
-                return Result.Fail("Incorrect credentials");
+                return Result.Fail(new UnauthorizedError("Incorrect credentials"));
 
             var tokenExpiration = DateTime.UtcNow.AddDays(7);
             var token = GenereteJwtToken(user, tokenExpiration);
@@ -138,18 +142,18 @@ namespace TicketsSystem.Core.Services
             Guid userId = Guid.Parse(userIdStr);
 
             if (userDTO == null)
-                throw new ArgumentNullException("UserDTo is null");
+                return Result.Fail(new BadRequestError("UserDTO is required"));
 
             var validationResult = await _userValidation.ValidateAsync(userDTO);
             if (!validationResult.IsValid)
             {
-                var errorMessages = validationResult.Errors.Select(e => e.ErrorMessage);
+                var errorMessages = validationResult.Errors.Select(e => new BadRequestError(e.ErrorMessage));
                 return Result.Fail(errorMessages);
             }
 
             var user = await _userRepository.GetUserById(userId);
             if (user == null)
-                return Result.Fail("The user does not exits");
+                return Result.Fail(new NotFoundError("The user does not exist"));
 
             user.FullName = userDTO.FullName;
             user.Email = userDTO.Email;
@@ -158,20 +162,6 @@ namespace TicketsSystem.Core.Services
             user.PasswordHash = _passwordHasher.HashPassword(user, userDTO.Password);
 
             await _userRepository.UpdateUserInfo(user);
-
-            return Result.Ok();
-        }
-
-        public async Task<Result> DeleteUserAsync(string userIdStr)
-        {
-            Guid userId = Guid.Parse(userIdStr);
-
-            var user = await _userRepository.GetUserById(userId);
-
-            if (user == null)
-                return Result.Fail("The user does not exits");
-
-            await _userRepository.DeleteUser(user);
 
             return Result.Ok();
         }
@@ -206,7 +196,7 @@ namespace TicketsSystem.Core.Services
         public async Task<Result<IEnumerable<UserDTO>>> SearchUserAsync(string query)
         {
             if (string.IsNullOrWhiteSpace(query))
-                return Result.Fail("Query format is not valid");
+                return Result.Fail(new BadRequestError("Query format is not valid"));
 
             query = query.ToLower();
 
@@ -229,14 +219,14 @@ namespace TicketsSystem.Core.Services
         public async Task<Result> DeactivateOrActivateAUserAsync(string userIdStr)
         {
             if (string.IsNullOrWhiteSpace(userIdStr))
-                return Result.Fail("There was a problem getting the user");
+                return Result.Fail(new BadRequestError("User ID is required"));
 
             Guid userId = Guid.Parse(userIdStr);
 
             var user = await _userRepository.GetUserById(userId);
 
             if (user == null)
-                return Result.Fail("The user is does not exist");
+                return Result.Fail(new NotFoundError("The user does not exist"));
 
             user.IsActive = !user.IsActive;
 

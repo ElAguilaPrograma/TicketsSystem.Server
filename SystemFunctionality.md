@@ -15,7 +15,7 @@ El sistema tiene 3 Roles.
 7.- Aceptar tickets - Ready.
 8.- Asignar tickets - Ready.
 9.- Cambiar estado y prioridad de los tickets. - Ready.
-10.- Editar los tickets.
+10.- Editar los tickets. Ready.
 11.- Borrar los tickets.
 12.- Buscar tickets.
 13.- Ver el historial global todos los tickets.
