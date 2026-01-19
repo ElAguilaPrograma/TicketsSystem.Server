@@ -1,0 +1,38 @@
+<div class="flex h-screen w-full items-center justify-center bg-slate-200 dark:bg-slate-950/10">
+    <p-card styleClass="w-[25rem] shadow-xl border-none dark:bg-slate-900 border-none">
+        <ng-template pTemplate="header">
+            <div class="flex flex-col items-center pt-8 pb-2">
+                <i class="pi pi-user text-4xl text-primary mb-2"></i>
+                <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Welcome Back</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm">Sign in to continue</p>
+            </div>
+        </ng-template>
+
+        <div class="flex flex-col gap-5 px-2">
+            <div class="flex flex-col gap-2">
+                <label for="email" class="text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
+                <input pInputText id="email" type="email" placeholder="Enter your email" class="w-full" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label for="password" class="text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
+                <div class="relative">
+                    <input pInputText id="password" type="password" placeholder="Enter your password" class="w-full" />
+                    <i class="pi pi-lock absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                </div>
+                <div class="flex justify-end">
+                    <a href="#" class="text-xs text-primary hover:underline">Forgot password?</a>
+                </div>
+            </div>
+
+            <p-button label="Sign In" [style]="{width: '100%'}" size="small" (click)="login()"></p-button>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="text-center mt-2">
+                <span class="text-sm text-slate-500 dark:text-slate-400">Don't have an account? </span>
+                <a href="#" class="text-sm text-primary font-medium hover:underline">Register</a>
+            </div>
+        </ng-template>
+    </p-card>
+</div>
