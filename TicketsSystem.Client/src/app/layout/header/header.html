@@ -1,7 +1,7 @@
 <header class="w-full h-20 flex items-center justify-between px-6 -py-4" [ngClass]="{
     'border-b border-brand-border': this.authService.isLoggedIn(),
     'shadow-lg/30': !this.authService.isLoggedIn() || this.isHomeRoute() 
-}">
+    }">
     <div class="flex items-center gap-3">
         <div class="flex flex-col">
             @if (this.authService.isLoggedIn() && !this.isHomeRoute()) {

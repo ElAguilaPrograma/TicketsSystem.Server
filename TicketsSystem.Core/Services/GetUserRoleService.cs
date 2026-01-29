@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using TicketsSystem_Data.Repositories;
+﻿using TicketsSystem.Domain.Interfaces;
 
 namespace TicketsSystem.Core.Services
 {

@@ -1,5 +1,6 @@
 <Solution>
+  <Project Path="TicketsSystem.Api/TicketsSystem.Api.csproj" />
   <Project Path="TicketsSystem.Core/TicketsSystem.Core.csproj" Id="720164d4-d556-4b1f-a881-9acfcbb2b594" />
-  <Project Path="TicketsSystem/TicketsSystem.Api.csproj" />
-  <Project Path="TicketsSystem_Data/TicketsSystem.Data.csproj" Id="f018f1af-b375-4224-9e9e-ffe7ab097687" />
+  <Project Path="TicketsSystem.Data/TicketsSystem.Data.csproj" Id="f018f1af-b375-4224-9e9e-ffe7ab097687" />
+  <Project Path="TicketsSystem.Domain/TicketsSystem.Domain.csproj" />
 </Solution>

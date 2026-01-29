@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using TicketsSystem.Data.DTOs;
+using TicketsSystem.Core.DTOs;
 
 namespace TicketsSystem.Core.Validations
 {

@@ -1,21 +1,16 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using System.ComponentModel.DataAnnotations;
+using TicketsSystem.Core.DTOs;
 using TicketsSystem.Core.Validations;
-using TicketsSystem.Data.DTOs;
-using TicketsSystem_Data;
-using TicketsSystem_Data.Repositories;
+using TicketsSystem.Domain.Entities;
+using TicketsSystem.Domain.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using TicketsSystem.Core.Models;
-using Microsoft.AspNetCore.Http;
 using FluentResults;
-using System.Threading.Tasks;
 using TicketsSystem.Core.Errors;
-using TicketsSystem.Data.Repositories;
-
 
 namespace TicketsSystem.Core.Services
 {
@@ -78,7 +73,6 @@ namespace TicketsSystem.Core.Services
             var validationResult = await _userValidation.ValidateAsync(userDTO);
             if (!validationResult.IsValid)
             {
-                // throw new ValidationException("One or more fields do not meet the requirements." + validationResult.Errors);
                 var errorMessages = validationResult.Errors.Select(e => new BadRequestError(e.ErrorMessage));
                 return Result.Fail(errorMessages);
             }
@@ -99,7 +93,7 @@ namespace TicketsSystem.Core.Services
 
             await _userRepository.CreateNewUser(newUser);
 
-            return Result.Ok(); //.WithSuccess("User created");
+            return Result.Ok();
         }
 
         public async Task<Result<LoginSuccessDto>> LoginAsync(LoginRequest request)
@@ -172,9 +166,7 @@ namespace TicketsSystem.Core.Services
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                // Unique id token
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                // Roles
                 new Claim(ClaimTypes.Role, user.Role)
             };
 
@@ -185,7 +177,6 @@ namespace TicketsSystem.Core.Services
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                // Expiration time
                 expires: expiration,
                 signingCredentials: creds
             );

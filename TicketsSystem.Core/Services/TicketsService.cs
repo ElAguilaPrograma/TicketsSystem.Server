@@ -1,19 +1,10 @@
 ﻿using FluentResults;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using TicketsSystem.Core.DTOs;
 using TicketsSystem.Core.Errors;
-using TicketsSystem.Core.Validations;
 using TicketsSystem.Core.Validations.TicketsValidations;
-using TicketsSystem.Data.DTOs;
-using TicketsSystem.Data.DTOs.TicketsDTO;
-using TicketsSystem.Data.Repositories;
-using TicketsSystem_Data;
-using TicketsSystem_Data.Repositories;
+using TicketsSystem.Domain.Entities;
+using TicketsSystem.Domain.Interfaces;
 
 namespace TicketsSystem.Core.Services
 {
@@ -22,8 +13,10 @@ namespace TicketsSystem.Core.Services
         Task<Result> AcceptTickets(string ticketIdStr);
         Task<Result> AssingTicketAsync(string userIdStr, string ticketIdSrt);
         Task<Result> CreateATicketAsync(TicketsCreateDto ticketsCreateDto);
+        Task<Result<TicketsCreateComment>> CreateTicketCommentAsync(string ticketIdStr, TicketsCreateComment ticketsCreateComment);
         Task<Result<IEnumerable<TicketsReadDto>>> GetAllTicketsAsync();
         Task<Result<IEnumerable<TicketsReadDto>>> GetCurrentUserTicketsAsync();
+        Task<Result<IEnumerable<TicketsReadComment>>> GetTicketCommentsAsync(string ticketIdStr);
         Task<Result<IEnumerable<TicketsReadDto>>> GetTicketsByUserIdAsync(string userIdStr);
         Task<Result<IEnumerable<TicketsReadDto>>> SearchTicketsAsync(string query, int? statusId, int? priorityId);
         Task<Result> UpdateATicketInfoAsync(TicketsUpdateDto ticketsUpdateDto, string ticketIdStr);
@@ -281,6 +274,55 @@ namespace TicketsSystem.Core.Services
             });
 
             return Result.Ok(ticketsReadDtos);
+        }
+
+        public async Task<Result<TicketsCreateComment>> CreateTicketCommentAsync(string ticketIdStr, TicketsCreateComment ticketsCreateComment)
+        {
+            if (string.IsNullOrWhiteSpace(ticketsCreateComment.Content))
+                return Result.Fail(new BadRequestError("Content format is incorrect"));
+
+            Guid ticketId = Guid.Parse(ticketIdStr);
+
+            if (!await _ticketsRepository.TicketExist(ticketId))
+                return Result.Fail(new NotFoundError("The ticket was not found"));
+
+            if (_currentUserService.GetCurrentUserRole() == "User")
+                ticketsCreateComment.IsInternal = false;
+
+            var ticketComment = new TicketComment
+            {
+                TicketId = ticketId,
+                UserId = _currentUserService.GetCurrentUserId(),
+                Content = ticketsCreateComment.Content,
+                IsInternal = ticketsCreateComment.IsInternal
+            };
+
+            await _ticketsRepository.CreateTicketComment(ticketComment);
+
+            return Result.Ok();
+        }
+
+        public async Task<Result<IEnumerable<TicketsReadComment>>> GetTicketCommentsAsync(string ticketIdStr)
+        {
+            if (string.IsNullOrWhiteSpace(ticketIdStr))
+                return Result.Fail(new BadRequestError("TicketId was bad formated"));
+
+            Guid ticketId = Guid.Parse(ticketIdStr);
+
+            if (!await _ticketsRepository.TicketExist(ticketId))
+                return Result.Fail(new NotFoundError("The ticket it does not exist"));
+
+            var ticketsComments = await _ticketsRepository.GetTicketComments(ticketId);
+
+            IEnumerable<TicketsReadComment> ticketsReadComments = ticketsComments.Select(tc => new TicketsReadComment
+            {
+                CommentId = tc.CommentId,
+                UserId = tc.UserId,
+                Content = tc.Content,
+                IsInternal = tc.IsInternal
+            });
+
+            return Result.Ok(ticketsReadComments);
         }
 
     }
