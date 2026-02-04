@@ -1,9 +1,0 @@
-<div [class]="containerClasses" [style.width]="width !== 'full' && width !== 'auto' ? width : null">
-    <ng-icon name="heroMagnifyingGlass" [class]="iconClasses"></ng-icon>
-    <input type="text" [class]="inputClasses" [placeholder]="placeholder" [(ngModel)]="searchValue"
-        (keyup.enter)="onSearch()" />
-    
-    @if (searchValue() !== '') {
-        <ng-icon name="heroXMark" [class]="iconClasses" class="rounded-full hover:bg-brand-primary/20 transition-colors" (click)="onClear()"></ng-icon>
-    }
-</div>
