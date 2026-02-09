@@ -33,7 +33,7 @@ public class UserRepository : IUserRepository
     public Task<User?> Login(string email)
         => _context.Users.FirstOrDefaultAsync(e => e.Email == email);
 
-    public Task<User?> GetUserById(Guid userId)
+    public Task<User?> GetUserById(Guid? userId)
         => _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
 
     public async Task<IEnumerable<Ticket>> UserManagedTickets(Guid userId)

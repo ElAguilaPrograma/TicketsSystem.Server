@@ -4,12 +4,15 @@ using TicketsSystem.Domain.Interfaces;
 
 namespace TicketsSystem.Data.Repositories;
 
-public class TicketsRepository : ITicketsRepository
+public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
 {
-    private readonly SystemTicketsContext _context;
-    public TicketsRepository(SystemTicketsContext context)
+    private readonly DbSet<Ticket> _tickets;
+    private readonly DbSet<TicketComment> _ticketsComment;
+    // _context se hereda desde GenericRepository ya que esta como protected
+    public TicketsRepository(SystemTicketsContext context) : base(context) 
     {
-        _context = context;
+        _tickets = _dbSet;
+        _ticketsComment = _context.Set<TicketComment>();
     }
 
     public async Task<IEnumerable<Ticket>> GetAllTickets()
@@ -48,30 +51,6 @@ public class TicketsRepository : ITicketsRepository
     {
         return await _context.Tickets
             .FirstOrDefaultAsync(t => t.TicketId == ticketId);
-    }
-
-    public Task CreateTicket(Ticket newTicket)
-    {
-        _context.Tickets.Add(newTicket);
-        return _context.SaveChangesAsync();
-    }
-
-    public Task UpdateTicketInfo(Ticket ticket)
-    {
-        _context.Tickets.Update(ticket);
-        return _context.SaveChangesAsync();
-    }
-
-    public Task AssingTicket(Ticket ticketWithAssingUserId)
-    {
-        _context.Tickets.Update(ticketWithAssingUserId);
-        return _context.SaveChangesAsync();
-    }
-
-    public Task AcceptTickets(Ticket ticketAccepted)
-    {
-        _context.Tickets.Update(ticketAccepted);
-        return _context.SaveChangesAsync();
     }
 
     public async Task<IEnumerable<Ticket?>> SearchTickets(string query, int? statusId, int? priorityId)

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace TicketsSystem.Core.Validations.TicketsValidations
+﻿namespace TicketsSystem.Core.Validations.TicketsValidations
 {
     public interface ITicketsCustomValidations
     {
@@ -29,5 +25,6 @@ namespace TicketsSystem.Core.Validations.TicketsValidations
 
             return true;
         }
+
     }
 }

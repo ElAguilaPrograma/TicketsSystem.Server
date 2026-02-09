@@ -31,17 +31,20 @@ namespace TicketsSystem.Core.Services
         private readonly IGetUserRole _getUseRole;
         private readonly TicketsCreateValidator _ticketsCreateValidator;
         private readonly TicketsUpdateValidator _ticketsUpdateValidator;
+        private readonly IUserRepository _userRepository;
         public TicketsService(ITicketsRepository ticketsRepository,
             ICurrentUserService currentUserService,
             TicketsCreateValidator ticketsCreateValidator,
             IGetUserRole getUserRole,
-            TicketsUpdateValidator ticketsUpdateValidator)
+            TicketsUpdateValidator ticketsUpdateValidator,
+            IUserRepository userRepository)
         {
             _ticketsRepository = ticketsRepository;
             _currentUserService = currentUserService;
             _getUseRole = getUserRole;
             _ticketsCreateValidator = ticketsCreateValidator;
             _ticketsUpdateValidator = ticketsUpdateValidator;
+            _userRepository = userRepository;
         }
 
         public async Task<Result<IEnumerable<TicketsReadDto>>> GetAllTicketsAsync()
@@ -129,11 +132,13 @@ namespace TicketsSystem.Core.Services
                 CreatedByUserId = userId
             };
 
-            await _ticketsRepository.CreateTicket(newTicket);
+            await _ticketsRepository.Create(newTicket);
 
             return Result.Ok();
         }
 
+        // Cuidado con las pruebas, revisar que el AssinedToUserId no sea un
+        // Guid que no exista en la tabla User, en producción no debe de fallar asi
         public async Task<Result> UpdateATicketInfoAsync(TicketsUpdateDto ticketsUpdateDto, string ticketIdStr)
         {
             if (string.IsNullOrWhiteSpace(ticketIdStr))
@@ -160,9 +165,18 @@ namespace TicketsSystem.Core.Services
             ticket.StatusId = ticketsUpdateDto.StatusId;
             ticket.PriorityId = ticketsUpdateDto.PriorityId;
             ticket.UpdatedAt = ticketsUpdateDto.UpdatedAt;
-            ticket.AssignedToUserId = ticketsUpdateDto.AssignedToUserId;
 
-            await _ticketsRepository.UpdateTicketInfo(ticket);
+            if (ticketsUpdateDto.AssignedToUserId != null)
+            {
+                var user = await _userRepository.GetUserById(ticketsUpdateDto.AssignedToUserId.Value);
+
+                if (user == null)
+                    return Result.Fail(new NotFoundError("The agent you are trying to assign does not exist."));
+
+                ticket.AssignedToUserId = ticketsUpdateDto.AssignedToUserId;
+            }
+
+                await _ticketsRepository.Update(ticket);
 
             return Result.Ok();
         }
@@ -218,7 +232,7 @@ namespace TicketsSystem.Core.Services
             ticket.AssignedToUserId = userId;
             ticket.UpdatedAt = DateTime.UtcNow;
 
-            await _ticketsRepository.AssingTicket(ticket);
+            await _ticketsRepository.Update(ticket);
 
             return Result.Ok();
         }
@@ -242,7 +256,7 @@ namespace TicketsSystem.Core.Services
             ticket.AssignedToUserId = userId;
             ticket.UpdatedAt = DateTime.UtcNow;
 
-            await _ticketsRepository.AssingTicket(ticket);
+            await _ticketsRepository.Update(ticket);
 
             return Result.Ok();
         }
