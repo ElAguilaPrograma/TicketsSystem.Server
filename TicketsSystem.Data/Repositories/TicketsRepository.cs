@@ -72,21 +72,4 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
     public Task<bool> TicketExist(Guid ticketId)
         => _context.Tickets.AnyAsync(t  => t.TicketId == ticketId);
 
-    public Task CreateTicketComment(TicketComment ticketComment)
-    {
-        _context.TicketComments.Add(ticketComment);
-        return _context.SaveChangesAsync();
-    }
-
-    public async Task<IEnumerable<TicketComment>> GetTicketComments(Guid ticketId)
-        => await _context.TicketComments.Where(tc => tc.TicketId == ticketId).ToListAsync();
-
-    public Task UpdateTicketComment(TicketComment ticketComment)
-    {
-        _context.TicketComments.Update(ticketComment);
-        return _context.SaveChangesAsync();
-    }
-
-    public async Task<TicketComment?> GetTicketCommentById(Guid ticketCommentId)
-        => await _context.TicketComments.FirstOrDefaultAsync(tc => tc.CommentId == ticketCommentId);
 }

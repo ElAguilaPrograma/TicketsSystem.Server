@@ -133,12 +133,14 @@ builder.Services.AddDbContext<SystemTicketsContext>(options =>
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITicketsRepository, TicketsRepository>();
+builder.Services.AddScoped<ITicketCommentsRepository, TicketCommentsRepository>();
 
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<ITicketsService, TicketsService>();
 builder.Services.AddScoped<IGetUserRole, GetUserRoleService>();
+builder.Services.AddScoped<ITicketCommetsService, TicketCommentsService>();
 
 // Validations
 builder.Services.AddTransient<UserDTOValidator, UserDTOValidator>();

@@ -60,17 +60,5 @@ namespace TicketsSystem.Api.Controllers
         [HttpPost("searchtickets/{query}")]
         public async Task<IActionResult> SearchTickets(string query, int? statusId, int? priorityId)
             => ProcessResult(await _ticketsService.SearchTicketsAsync(query, statusId, priorityId));
-
-        [HttpPost("createticketcomment/{ticketId}")]
-        public async Task<IActionResult> CreateTicketComment(string ticketId, [FromBody] TicketsCreateComment ticketsCreateComment)
-            => ProcessResult(await _ticketsService.CreateTicketCommentAsync(ticketId, ticketsCreateComment));
-
-        [HttpGet("getticketscomment/{ticketId}")]
-        public async Task<IActionResult> GetTicketComment(string ticketId)
-            => ProcessResult(await _ticketsService.GetTicketCommentsAsync(ticketId));
-
-        [HttpPost("updateticketcommnet/{commentId}")]
-        public async Task<IActionResult> UpdateTicketComment([FromBody] TickersUpdateComment ticketsUpdateComment, string commentId)
-            => ProcessResult(await _ticketsService.UpdateTicketCommentAsync(ticketsUpdateComment, commentId));
     }
 }
