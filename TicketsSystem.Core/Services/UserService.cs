@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using TicketsSystem.Core.DTOs;
-using TicketsSystem.Core.Validations;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
@@ -8,50 +6,51 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
-using TicketsSystem.Core.Models;
 using FluentResults;
 using TicketsSystem.Core.Errors;
+using TicketsSystem.Core.Validations.UserValidations;
+using TicketsSystem.Core.DTOs.UserDTO;
 
 namespace TicketsSystem.Core.Services
 {
     public interface IUserService
     {
-        Task<Result> CreateNewUserAsync(UserDTO userDTO);
+        Task<Result> CreateNewUserAsync(UserCreateDto userCreateDto);
         Task<Result> DeactivateOrActivateAUserAsync(string userIdStr);
-        Task<Result<IEnumerable<UserDTO>>> GetAllUsersAsync();
+        Task<Result<IEnumerable<UserReadDto>>> GetAllUsersAsync();
         Task<Result<LoginSuccessDto>> LoginAsync(LoginRequest request);
-        Task<Result<IEnumerable<UserDTO>>> SearchUserAsync(string query);
-        Task<Result> UpdateUserInformationAsync(UserDTO userDTO, string userIdStr);
+        Task<Result<IEnumerable<UserReadDto>>> SearchUserAsync(string query);
+        Task<Result> UpdateUserInformationAsync(UserUpdateDto userUpdateDto, string userIdStr);
     }
 
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
-        private readonly UserDTOValidator _userValidation;
+        private readonly UserCreateValidator _userCreateValidator;
+        private readonly UserUpdateValidator _userUpdateValidator;
         private readonly LoginRequestValidation _loginRequestValidation;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IConfiguration _config;
-        private readonly ITicketsRepository _ticketRepository;
         public UserService(
             IUserRepository userRepository,
-            UserDTOValidator validationRules,
+            UserCreateValidator validationCreateRules,
+            UserUpdateValidator updateUserUpdateRules,
             IPasswordHasher<User> passwordHasher,
             LoginRequestValidation loginValidationsRules,
-            IConfiguration configuration,
-            ITicketsRepository ticketsRepository)
+            IConfiguration configuration)
         {
             _userRepository = userRepository;
-            _userValidation = validationRules;
+            _userCreateValidator = validationCreateRules;
+            _userUpdateValidator = updateUserUpdateRules;
             _passwordHasher = passwordHasher;
             _loginRequestValidation = loginValidationsRules;
             _config = configuration;
-            _ticketRepository = ticketsRepository;
         }
 
-        public async Task<Result<IEnumerable<UserDTO>>> GetAllUsersAsync()
+        public async Task<Result<IEnumerable<UserReadDto>>> GetAllUsersAsync()
         {
-            var users = await _userRepository.GetAllUsers();
-            IEnumerable<UserDTO> userDTOs = users.Select(u => new UserDTO
+            var users = await _userRepository.GetAll();
+            IEnumerable<UserReadDto> userDTOs = users.Select(u => new UserReadDto
             {
                 UserId = u.UserId,
                 FullName = u.FullName,
@@ -65,33 +64,33 @@ namespace TicketsSystem.Core.Services
             return Result.Ok(userDTOs);
         }
 
-        public async Task<Result> CreateNewUserAsync(UserDTO userDTO)
+        public async Task<Result> CreateNewUserAsync(UserCreateDto userCreateDto)
         {
-            if (userDTO == null)
+            if (userCreateDto == null)
                 return Result.Fail(new BadRequestError("userDto is required"));
 
-            var validationResult = await _userValidation.ValidateAsync(userDTO);
+            var validationResult = await _userCreateValidator.ValidateAsync(userCreateDto);
             if (!validationResult.IsValid)
             {
                 var errorMessages = validationResult.Errors.Select(e => new BadRequestError(e.ErrorMessage));
                 return Result.Fail(errorMessages);
             }
 
-            if (await _userRepository.EmailExist(userDTO.Email))
+            if (await _userRepository.EmailExist(userCreateDto.Email))
                 return Result.Fail(new BadRequestError("The user already exist"));
 
             var newUser = new User
             {
-                FullName = userDTO.FullName,
-                Email = userDTO.Email,
-                PasswordHash = userDTO.Password,
-                Role = userDTO.Role,
-                IsActive = userDTO.IsActive
+                FullName = userCreateDto.FullName,
+                Email = userCreateDto.Email,
+                PasswordHash = userCreateDto.Password,
+                Role = userCreateDto.Role,
+                IsActive = userCreateDto.IsActive
             };
 
-            newUser.PasswordHash = _passwordHasher.HashPassword(newUser, userDTO.Password);
+            newUser.PasswordHash = _passwordHasher.HashPassword(newUser, userCreateDto.Password);
 
-            await _userRepository.CreateNewUser(newUser);
+            await _userRepository.Create(newUser);
 
             return Result.Ok();
         }
@@ -131,14 +130,14 @@ namespace TicketsSystem.Core.Services
             });
         }
 
-        public async Task<Result> UpdateUserInformationAsync(UserDTO userDTO, string userIdStr)
+        public async Task<Result> UpdateUserInformationAsync(UserUpdateDto userUpdateDto, string userIdStr)
         {
             Guid userId = Guid.Parse(userIdStr);
 
-            if (userDTO == null)
+            if (userUpdateDto == null)
                 return Result.Fail(new BadRequestError("UserDTO is required"));
 
-            var validationResult = await _userValidation.ValidateAsync(userDTO);
+            var validationResult = await _userUpdateValidator.ValidateAsync(userUpdateDto);
             if (!validationResult.IsValid)
             {
                 var errorMessages = validationResult.Errors.Select(e => new BadRequestError(e.ErrorMessage));
@@ -149,11 +148,11 @@ namespace TicketsSystem.Core.Services
             if (user == null)
                 return Result.Fail(new NotFoundError("The user does not exist"));
 
-            user.FullName = userDTO.FullName;
-            user.Email = userDTO.Email;
-            user.Role = userDTO.Role;
-            user.IsActive = userDTO.IsActive;
-            user.PasswordHash = _passwordHasher.HashPassword(user, userDTO.Password);
+            user.FullName = userUpdateDto.FullName;
+            user.Email = userUpdateDto.Email;
+            user.Role = userUpdateDto.Role;
+            user.IsActive = userUpdateDto.IsActive;
+            user.PasswordHash = _passwordHasher.HashPassword(user, userUpdateDto.Password);
 
             await _userRepository.UpdateUserInfo(user);
 
@@ -184,7 +183,7 @@ namespace TicketsSystem.Core.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<Result<IEnumerable<UserDTO>>> SearchUserAsync(string query)
+        public async Task<Result<IEnumerable<UserReadDto>>> SearchUserAsync(string query)
         {
             if (string.IsNullOrWhiteSpace(query))
                 return Result.Fail(new BadRequestError("Query format is not valid"));
@@ -193,7 +192,7 @@ namespace TicketsSystem.Core.Services
 
             var user = await _userRepository.SearchUsers(query);
 
-            IEnumerable<UserDTO> userDTO = user.Select(u => new UserDTO
+            IEnumerable<UserReadDto> userDTO = user.Select(u => new UserReadDto
             {
                 UserId = u.UserId,
                 FullName = u.FullName,

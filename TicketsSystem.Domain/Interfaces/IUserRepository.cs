@@ -2,7 +2,7 @@ using TicketsSystem.Domain.Entities;
 
 namespace TicketsSystem.Domain.Interfaces;
 
-public interface IUserRepository
+public interface IUserRepository : IGenericRepository<User>
 {
     Task<IEnumerable<User>> GetAllUsers();
     Task<User?> GetUserById(Guid? userId);

@@ -1,4 +1,4 @@
-namespace TicketsSystem.Core.DTOs;
+namespace TicketsSystem.Core.DTOs.UserDTO;
 
 public class LoginRequest
 {

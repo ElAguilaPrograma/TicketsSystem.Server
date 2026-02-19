@@ -1,6 +1,6 @@
 ﻿using FluentResults;
 using Microsoft.AspNetCore.Mvc;
-using TicketsSystem.Core.DTOs;
+using TicketsSystem.Core.DTOs.TicketsDTO;
 using TicketsSystem.Core.Errors;
 using TicketsSystem.Core.Validations.TicketsValidations;
 using TicketsSystem.Domain.Entities;

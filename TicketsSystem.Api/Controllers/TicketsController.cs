@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-using TicketsSystem.Core.DTOs;
+using TicketsSystem.Core.DTOs.TicketsDTO;
 using TicketsSystem.Core.Errors;
 using TicketsSystem.Core.Services;
 

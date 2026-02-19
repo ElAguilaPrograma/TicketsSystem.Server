@@ -4,13 +4,13 @@ using TicketsSystem.Domain.Interfaces;
 
 namespace TicketsSystem.Data.Repositories;
 
-public class UserRepository : IUserRepository
+public class UserRepository : GenericRepository<User>, IUserRepository
 {
-    private readonly SystemTicketsContext _context;
+    private readonly DbSet<User> _users;
 
-    public UserRepository(SystemTicketsContext systemTicketsContext)
+    public UserRepository(SystemTicketsContext systemTicketsContext) : base(systemTicketsContext)
     {
-        _context = systemTicketsContext;
+        _users = _dbSet;
     }
 
     public async Task<IEnumerable<User>> GetAllUsers()
@@ -31,20 +31,20 @@ public class UserRepository : IUserRepository
     }
 
     public Task<User?> Login(string email)
-        => _context.Users.FirstOrDefaultAsync(e => e.Email == email);
+        => _users.FirstOrDefaultAsync(e => e.Email == email);
 
     public Task<User?> GetUserById(Guid? userId)
-        => _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+        => _users.FirstOrDefaultAsync(u => u.UserId == userId);
 
     public async Task<IEnumerable<Ticket>> UserManagedTickets(Guid userId)
         => await _context.Tickets.Where(t => t.AssignedToUserId == userId).ToListAsync();
 
     public Task<bool> EmailExist(string email)
-        => _context.Users.AnyAsync(u => u.Email == email);
+        => _users.AnyAsync(u => u.Email == email);
 
     public async Task<IEnumerable<User>> SearchUsers(string query)
     {
-        return await _context.Users
+        return await _users
             .Where(u => u.Email.ToLower().Contains(query) || u.FullName.ToLower().Contains(query))
             .ToListAsync();
     }

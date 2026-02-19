@@ -1,3 +1,5 @@
+using TicketsSystem.Domain.Enums;
+
 namespace TicketsSystem.Domain.Entities;
 
 public class User
@@ -6,7 +8,15 @@ public class User
     public string FullName { get; set; } = null!;
     public string Email { get; set; } = null!;
     public string PasswordHash { get; set; } = null!;
-    public string Role { get; set; } = null!;
+    private string _role = null!;
+    public string Role { get => _role; set
+        {
+            if (!Enum.TryParse<UserRole>(value, ignoreCase: true, out _))
+                throw new ArgumentException($"Invalid role: '{value}'. Accepted roles: " +
+                    $"{string.Join(", ", Enum.GetNames<UserRole>())}");
+            _role = value;
+        } 
+    }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
 

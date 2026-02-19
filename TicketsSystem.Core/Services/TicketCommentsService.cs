@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using TicketsSystem.Core.DTOs;
+using TicketsSystem.Core.DTOs.TicketsCommentsDTO;
 using TicketsSystem.Core.Errors;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Interfaces;

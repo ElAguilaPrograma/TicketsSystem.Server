@@ -6,8 +6,8 @@ using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
 using TicketsSystem.Core.Services;
-using TicketsSystem.Core.Validations;
 using TicketsSystem.Core.Validations.TicketsValidations;
+using TicketsSystem.Core.Validations.UserValidations;
 using TicketsSystem.Data;
 using TicketsSystem.Data.Repositories;
 using TicketsSystem.Domain.Entities;
@@ -143,7 +143,8 @@ builder.Services.AddScoped<IGetUserRole, GetUserRoleService>();
 builder.Services.AddScoped<ITicketCommetsService, TicketCommentsService>();
 
 // Validations
-builder.Services.AddTransient<UserDTOValidator, UserDTOValidator>();
+builder.Services.AddTransient<UserCreateValidator, UserCreateValidator>();
+builder.Services.AddTransient<UserUpdateValidator, UserUpdateValidator>();
 builder.Services.AddTransient<LoginRequestValidation, LoginRequestValidation>();
 builder.Services.AddTransient<TicketsCreateValidator, TicketsCreateValidator>();
 builder.Services.AddTransient<TicketsUpdateValidator, TicketsUpdateValidator>();

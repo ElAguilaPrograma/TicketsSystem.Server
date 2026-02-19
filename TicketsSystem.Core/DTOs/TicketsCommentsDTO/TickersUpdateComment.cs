@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace TicketsSystem.Core.DTOs
+namespace TicketsSystem.Core.DTOs.TicketsCommentsDTO
 {
     public class TickersUpdateComment
     {

@@ -1,6 +1,6 @@
-namespace TicketsSystem.Core.DTOs;
+namespace TicketsSystem.Core.DTOs.UserDTO;
 
-public class UserDTO
+public class UserReadDto
 {
     public Guid UserId { get; set; }
     public string FullName { get; set; } = null!;

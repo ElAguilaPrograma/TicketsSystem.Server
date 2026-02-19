@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using TicketsSystem.Core.DTOs;
+using TicketsSystem.Core.DTOs.TicketsCommentsDTO;
 using TicketsSystem.Core.Services;
 
 namespace TicketsSystem.Api.Controllers

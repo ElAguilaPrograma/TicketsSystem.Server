@@ -4,9 +4,9 @@ using TicketsSystem.Domain.Enums;
 
 namespace TicketsSystem.Core.Validations.UserValidations
 {
-    public class UserCreateValidator : AbstractValidator<UserCreateDto>
+    public class UserUpdateValidator : AbstractValidator<UserUpdateDto>
     {
-        public UserCreateValidator()
+        public UserUpdateValidator()
         {
             RuleFor(u => u.FullName).NotEmpty().MinimumLength(5);
             RuleFor(u => u.Email).NotEmpty().EmailAddress();

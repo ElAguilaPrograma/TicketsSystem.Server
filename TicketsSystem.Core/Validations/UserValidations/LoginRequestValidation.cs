@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
-using TicketsSystem.Core.DTOs;
+using TicketsSystem.Core.DTOs.UserDTO;
 
-namespace TicketsSystem.Core.Validations
+namespace TicketsSystem.Core.Validations.UserValidations
 {
     public class LoginRequestValidation : AbstractValidator<LoginRequest>
     {

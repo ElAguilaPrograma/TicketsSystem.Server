@@ -7,17 +7,15 @@ namespace TicketsSystem.Data.Repositories;
 public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
 {
     private readonly DbSet<Ticket> _tickets;
-    private readonly DbSet<TicketComment> _ticketsComment;
     // _context se hereda desde GenericRepository ya que esta como protected
     public TicketsRepository(SystemTicketsContext context) : base(context) 
     {
         _tickets = _dbSet;
-        _ticketsComment = _context.Set<TicketComment>();
     }
 
     public async Task<IEnumerable<Ticket>> GetAllTickets()
     {
-        var tickets = await _context.Tickets
+        var tickets = await _tickets
             .Include(t => t.Status)
             .Include(t => t.Priority)
             .Include(t => t.AssignedToUser)
@@ -27,7 +25,7 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
 
     public async Task<IEnumerable<Ticket>> GetCurrentUserTickets(Guid currentUserId, string userRole)
     {
-        var queryable = _context.Tickets.Where(t => t.CreatedByUserId == currentUserId || currentUserId == t.AssignedToUserId);
+        var queryable = _tickets.Where(t => t.CreatedByUserId == currentUserId || currentUserId == t.AssignedToUserId);
 
         if (userRole != "Agent")
             queryable = queryable.Where(t => t.CreatedByUserId == currentUserId);
@@ -40,7 +38,7 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
 
     public async Task<IEnumerable<Ticket>> GetTicketsByUserId(Guid userId)
     {
-        return await _context.Tickets
+        return await _tickets
             .Where(t => t.CreatedByUserId == userId)
             .Include(t => t.Status)
             .Include(t => t.Priority)
@@ -49,13 +47,13 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
 
     public async Task<Ticket?> GetTicketById(Guid ticketId)
     {
-        return await _context.Tickets
+        return await _tickets
             .FirstOrDefaultAsync(t => t.TicketId == ticketId);
     }
 
     public async Task<IEnumerable<Ticket?>> SearchTickets(string query, int? statusId, int? priorityId)
     {
-        var queryable = _context.Tickets.Where(t => t.Title.ToLower().Contains(query));
+        var queryable = _tickets.Where(t => t.Title.ToLower().Contains(query));
 
         if (statusId.HasValue)
             queryable = queryable.Where(t => t.StatusId == statusId.Value);
@@ -70,6 +68,6 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
     }
 
     public Task<bool> TicketExist(Guid ticketId)
-        => _context.Tickets.AnyAsync(t  => t.TicketId == ticketId);
+        => _tickets.AnyAsync(t  => t.TicketId == ticketId);
 
 }

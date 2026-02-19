@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using TicketsSystem.Core.DTOs;
+using TicketsSystem.Core.DTOs.UserDTO;
 using TicketsSystem.Core.Services;
 
 namespace TicketsSystem.Api.Controllers
@@ -23,13 +23,13 @@ namespace TicketsSystem.Api.Controllers
 
         [HttpPost("createuser")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> CreateNewUser([FromBody] UserDTO userDTO)
-            => ProcessResult(await _userService.CreateNewUserAsync(userDTO));
+        public async Task<IActionResult> CreateNewUser([FromBody] UserCreateDto userCreateDto)
+            => ProcessResult(await _userService.CreateNewUserAsync(userCreateDto));
 
         [HttpPost("updateuser/{userId}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateUserInformation([FromBody] UserDTO userDTO, string userId)
-            => ProcessResult(await _userService.UpdateUserInformationAsync(userDTO, userId));
+        public async Task<IActionResult> UpdateUserInformation([FromBody] UserUpdateDto userUpdateDto, string userId)
+            => ProcessResult(await _userService.UpdateUserInformationAsync(userUpdateDto, userId));
 
         [HttpGet("searchuser/{query}")]
         [Authorize(Roles = "Admin")]

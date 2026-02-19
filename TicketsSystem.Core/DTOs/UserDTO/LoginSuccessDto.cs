@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace TicketsSystem.Core.Models
+namespace TicketsSystem.Core.DTOs.UserDTO
 {
     public class LoginSuccessDto
     {
