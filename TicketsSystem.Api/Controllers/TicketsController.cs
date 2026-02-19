@@ -46,7 +46,7 @@ namespace TicketsSystem.Api.Controllers
 
         [HttpPost("updateticketpriority")]
         public async Task<IActionResult> UpdateTicketPriorityLevel([FromBody] TicketsUpdateDto ticketsUpdateDto, string ticketId)
-            => ProcessResult(await _ticketsService.UpdateATicketInfoUserAsync(ticketsUpdateDto, ticketId));
+            => ProcessResult(await _ticketsService.UpdateTicketPriority(ticketsUpdateDto, ticketId));
 
         [HttpPost("assingtickets/{ticketId}/{userId}")]
         [Authorize(Roles = "Admin")]

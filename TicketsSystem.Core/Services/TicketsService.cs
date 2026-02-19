@@ -164,16 +164,19 @@ namespace TicketsSystem.Core.Services
                 if (user == null)
                     return Result.Fail(new NotFoundError("The agent you are trying to assign does not exist."));
 
+                if (await _getUseRole.UserIsAgent(ticketsUpdateDto.AssignedToUserId.Value) == false)
+                    return Result.Fail(new ForbiddenError("The user is not Agent"));
+
                 ticket.AssignedToUserId = ticketsUpdateDto.AssignedToUserId;
             }
 
-                _ticketsRepository.Update(ticket);
+            _ticketsRepository.Update(ticket);
             await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
         }
 
-        public async Task<Result> UpdateATicketInfoUserAsync(TicketsUpdateDto ticketsUpdateDto, string ticketIdStr)
+        public async Task<Result> UpdateTicketPriority(TicketsUpdateDto ticketsUpdateDto, string ticketIdStr)
         {
             if (ticketsUpdateDto == null)
                 return Result.Fail(new BadRequestError("Request body is required"));
@@ -287,6 +290,8 @@ namespace TicketsSystem.Core.Services
 
             return Result.Ok(ticketsReadDtos);
         }
+
+        // Falta completar tickets y reabrirlos.
 
     }
 }

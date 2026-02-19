@@ -150,7 +150,6 @@ builder.Services.AddTransient<UserUpdateValidator, UserUpdateValidator>();
 builder.Services.AddTransient<LoginRequestValidation, LoginRequestValidation>();
 builder.Services.AddTransient<TicketsCreateValidator, TicketsCreateValidator>();
 builder.Services.AddTransient<TicketsUpdateValidator, TicketsUpdateValidator>();
-builder.Services.AddTransient<ITicketsCustomValidations, TicketsCustomValidations>();
 
 var app = builder.Build();
 

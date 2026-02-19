@@ -1,3 +1,5 @@
+using TicketsSystem.Domain.Enums;
+
 namespace TicketsSystem.Domain.Entities;
 
 public class Ticket
@@ -5,8 +7,22 @@ public class Ticket
     public Guid TicketId { get; set; }
     public string Title { get; set; } = null!;
     public string Description { get; set; } = null!;
-    public int StatusId { get; set; }
-    public int PriorityId { get; set; }
+    private int _statusId;
+    public int StatusId 
+    { 
+        get => _statusId;
+        set => _statusId = Enum.IsDefined(typeof(TicketsStatusValue), value) 
+            ? value 
+            : throw new ArgumentException($"Invalid StatusId: {value}");
+    }
+    private int _priorityId;
+    public int PriorityId
+    {
+        get => _priorityId;
+        set => _priorityId = Enum.IsDefined(typeof(TicketsStatusValue), value)
+            ? value
+            : throw new ArgumentException($"Invalid PriorityId: {value}");
+    }
     public Guid CreatedByUserId { get; set; }
     public Guid? AssignedToUserId { get; set; }
     public DateTime CreatedAt { get; set; }

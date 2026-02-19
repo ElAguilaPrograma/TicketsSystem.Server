@@ -14,6 +14,6 @@ namespace TicketsSystem.Core.Interfaces
         Task<Result<IEnumerable<TicketsReadDto>>> GetTicketsByUserIdAsync(string userIdStr);
         Task<Result<IEnumerable<TicketsReadDto>>> SearchTicketsAsync(string query, int? statusId, int? priorityId);
         Task<Result> UpdateATicketInfoAsync(TicketsUpdateDto ticketsUpdateDto, string ticketIdStr);
-        Task<Result> UpdateATicketInfoUserAsync([FromBody] TicketsUpdateDto ticketsUpdateDto, string ticketIdStr);
+        Task<Result> UpdateTicketPriority([FromBody] TicketsUpdateDto ticketsUpdateDto, string ticketIdStr);
     }
 }
