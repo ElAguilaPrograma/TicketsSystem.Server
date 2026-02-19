@@ -13,28 +13,8 @@ public class UserRepository : GenericRepository<User>, IUserRepository
         _users = _dbSet;
     }
 
-    public async Task<IEnumerable<User>> GetAllUsers()
-    {
-        return await _context.Users.ToListAsync();
-    }
-
-    public Task CreateNewUser(User newUser)
-    {
-        _context.Users.Add(newUser);
-        return _context.SaveChangesAsync();
-    }
-
-    public Task UpdateUserInfo(User userInfo)
-    {
-        _context.Update(userInfo);
-        return _context.SaveChangesAsync();
-    }
-
     public Task<User?> Login(string email)
         => _users.FirstOrDefaultAsync(e => e.Email == email);
-
-    public Task<User?> GetUserById(Guid? userId)
-        => _users.FirstOrDefaultAsync(u => u.UserId == userId);
 
     public async Task<IEnumerable<Ticket>> UserManagedTickets(Guid userId)
         => await _context.Tickets.Where(t => t.AssignedToUserId == userId).ToListAsync();

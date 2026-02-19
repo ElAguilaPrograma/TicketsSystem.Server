@@ -14,7 +14,7 @@ namespace TicketsSystem.Core.Services
 
         public async Task<bool> UserIsAdmin(Guid userId)
         {
-            var user = await _userRepository.GetUserById(userId);
+            var user = await _userRepository.GetById(userId);
             if (user == null) return false;
 
             if (user.Role == "Admin") return true;
@@ -24,7 +24,7 @@ namespace TicketsSystem.Core.Services
 
         public async Task<bool> UserIsAgent(Guid userId)
         {
-            var user = await _userRepository.GetUserById(userId);
+            var user = await _userRepository.GetById(userId);
             if (user == null) return false;
 
             if (user.Role == "Agent") return true;
@@ -34,7 +34,7 @@ namespace TicketsSystem.Core.Services
 
         public async Task<bool> UserIsUser(Guid userId)
         {
-            var user = await _userRepository.GetUserById(userId);
+            var user = await _userRepository.GetById(userId);
             if (user == null) return false;
 
             if (user.Role == "User") return true;

@@ -155,7 +155,7 @@ namespace TicketsSystem.Core.Services
 
             if (ticketsUpdateDto.AssignedToUserId != null)
             {
-                var user = await _userRepository.GetUserById(ticketsUpdateDto.AssignedToUserId.Value);
+                var user = await _userRepository.GetById(ticketsUpdateDto.AssignedToUserId.Value);
 
                 if (user == null)
                     return Result.Fail(new NotFoundError("The agent you are trying to assign does not exist."));
@@ -193,6 +193,8 @@ namespace TicketsSystem.Core.Services
                 return Result.Fail(new BadRequestError("The ticket was already accepted by an Agent"));
 
             ticket.PriorityId = ticketsUpdateDto.PriorityId;
+
+            await _ticketsRepository.Update(ticket);
 
             return Result.Ok();
         }

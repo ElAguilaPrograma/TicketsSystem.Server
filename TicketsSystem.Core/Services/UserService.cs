@@ -136,7 +136,7 @@ namespace TicketsSystem.Core.Services
                 return Result.Fail(errorMessages);
             }
 
-            var user = await _userRepository.GetUserById(userId);
+            var user = await _userRepository.GetById(userId);
             if (user == null)
                 return Result.Fail(new NotFoundError("The user does not exist"));
 
@@ -146,7 +146,7 @@ namespace TicketsSystem.Core.Services
             user.IsActive = userUpdateDto.IsActive;
             user.PasswordHash = _passwordHasher.HashPassword(user, userUpdateDto.Password);
 
-            await _userRepository.UpdateUserInfo(user);
+            await _userRepository.Update(user);
 
             return Result.Ok();
         }
@@ -205,14 +205,14 @@ namespace TicketsSystem.Core.Services
 
             Guid userId = Guid.Parse(userIdStr);
 
-            var user = await _userRepository.GetUserById(userId);
+            var user = await _userRepository.GetById(userId);
 
             if (user == null)
                 return Result.Fail(new NotFoundError("The user does not exist"));
 
             user.IsActive = !user.IsActive;
 
-            await _userRepository.UpdateUserInfo(user);
+            await _userRepository.Update(user);
 
             return Result.Ok();
         }
