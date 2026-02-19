@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TicketsSystem.Core.DTOs.TicketsCommentsDTO;
 using TicketsSystem.Core.Services;
+using TicketsSystem.Core.Interfaces;
 
 namespace TicketsSystem.Api.Controllers
 {

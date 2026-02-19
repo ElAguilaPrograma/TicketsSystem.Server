@@ -6,15 +6,11 @@ using TicketsSystem.Core.DTOs.TicketsCommentsDTO;
 using TicketsSystem.Core.Errors;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Interfaces;
+using TicketsSystem.Core.Interfaces;
 
 namespace TicketsSystem.Core.Services
 {
-    public interface ITicketCommetsService
-    {
-        Task<Result<TicketsCreateComment>> CreateTicketCommentAsync(string ticketIdStr, TicketsCreateComment ticketsCreateComment);
-        Task<Result<IEnumerable<TicketsReadComment>>> GetTicketCommentsAsync(string ticketIdStr);
-        Task<Result> UpdateTicketCommentAsync(TickersUpdateComment ticketsUpdateComment, string ticketCommentIdStr);
-    }
+
     public class TicketCommentsService : ITicketCommetsService
     {
         private readonly ITicketCommentsRepository _ticketCommentsRepository;

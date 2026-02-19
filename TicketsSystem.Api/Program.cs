@@ -12,6 +12,7 @@ using TicketsSystem.Data;
 using TicketsSystem.Data.Repositories;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Interfaces;
+using TicketsSystem.Core.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 

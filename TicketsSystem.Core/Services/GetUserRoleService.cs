@@ -1,13 +1,9 @@
 ﻿using TicketsSystem.Domain.Interfaces;
+using TicketsSystem.Core.Interfaces;
 
 namespace TicketsSystem.Core.Services
 {
-    public interface IGetUserRole
-    {
-        Task<bool> UserIsAdmin(Guid userId);
-        Task<bool> UserIsAgent(Guid userId);
-        Task<bool> UserIsUser(Guid userId);
-    }
+
     public class GetUserRoleService : IGetUserRole
     {
         private readonly IUserRepository _userRepository;

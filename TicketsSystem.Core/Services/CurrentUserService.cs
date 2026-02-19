@@ -1,15 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.JsonWebTokens;
 using System.Security.Claims;
+using TicketsSystem.Core.Interfaces;
 
 namespace TicketsSystem.Core.Services
 {
-    public interface ICurrentUserService
-    {
-        string? GetCurrentUserEmail();
-        Guid GetCurrentUserId();
-        string? GetCurrentUserRole();
-    }
+
     public class CurrentUserService : ICurrentUserService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
