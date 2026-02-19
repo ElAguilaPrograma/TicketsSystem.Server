@@ -19,12 +19,14 @@ namespace TicketsSystem.Core.Services
         private readonly TicketsCreateValidator _ticketsCreateValidator;
         private readonly TicketsUpdateValidator _ticketsUpdateValidator;
         private readonly IUserRepository _userRepository;
+        private readonly IUnitOfWork _unitOfWork;
         public TicketsService(ITicketsRepository ticketsRepository,
             ICurrentUserService currentUserService,
             TicketsCreateValidator ticketsCreateValidator,
             IGetUserRole getUserRole,
             TicketsUpdateValidator ticketsUpdateValidator,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            IUnitOfWork unitOfWork)
         {
             _ticketsRepository = ticketsRepository;
             _currentUserService = currentUserService;
@@ -32,6 +34,7 @@ namespace TicketsSystem.Core.Services
             _ticketsCreateValidator = ticketsCreateValidator;
             _ticketsUpdateValidator = ticketsUpdateValidator;
             _userRepository = userRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Result<IEnumerable<TicketsReadDto>>> GetAllTicketsAsync()
@@ -120,6 +123,7 @@ namespace TicketsSystem.Core.Services
             };
 
             await _ticketsRepository.Create(newTicket);
+            await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
         }
@@ -163,7 +167,8 @@ namespace TicketsSystem.Core.Services
                 ticket.AssignedToUserId = ticketsUpdateDto.AssignedToUserId;
             }
 
-                await _ticketsRepository.Update(ticket);
+                _ticketsRepository.Update(ticket);
+            await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
         }
@@ -194,7 +199,8 @@ namespace TicketsSystem.Core.Services
 
             ticket.PriorityId = ticketsUpdateDto.PriorityId;
 
-            await _ticketsRepository.Update(ticket);
+            _ticketsRepository.Update(ticket);
+            await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
         }
@@ -221,7 +227,8 @@ namespace TicketsSystem.Core.Services
             ticket.AssignedToUserId = userId;
             ticket.UpdatedAt = DateTime.UtcNow;
 
-            await _ticketsRepository.Update(ticket);
+            _ticketsRepository.Update(ticket);
+            await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
         }
@@ -245,7 +252,8 @@ namespace TicketsSystem.Core.Services
             ticket.AssignedToUserId = userId;
             ticket.UpdatedAt = DateTime.UtcNow;
 
-            await _ticketsRepository.Update(ticket);
+            _ticketsRepository.Update(ticket);
+            await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
         }

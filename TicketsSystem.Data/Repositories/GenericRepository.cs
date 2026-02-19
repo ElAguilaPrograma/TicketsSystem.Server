@@ -20,13 +20,11 @@ namespace TicketsSystem.Data.Repositories
         public async Task Create(T entity)
         {
             await _dbSet.AddAsync(entity);
-            await _context.SaveChangesAsync();
         }
 
-        public async Task Update(T entity)
+        public void Update(T entity)
         {
             _context.Update(entity);
-            await _context.SaveChangesAsync();
         }
     }
 }

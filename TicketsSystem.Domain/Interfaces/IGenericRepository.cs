@@ -9,6 +9,6 @@ namespace TicketsSystem.Domain.Interfaces
         Task<IEnumerable<T>> GetAll();
         Task<T?> GetById(Guid id);
         Task Create(T entity);
-        Task Update(T entity);
+        void Update(T entity);
     }
 }

@@ -16,11 +16,17 @@ namespace TicketsSystem.Core.Services
         private readonly ITicketCommentsRepository _ticketCommentsRepository;
         private readonly ITicketsRepository _ticketsRepository;
         private readonly ICurrentUserService _currentUserService;
-        public TicketCommentsService(ITicketCommentsRepository ticketCommentsRepository, ICurrentUserService currentUserService, ITicketsRepository ticketsRepository)
+        private readonly IUnitOfWork _unitOfWork;
+        public TicketCommentsService(
+            ITicketCommentsRepository ticketCommentsRepository,
+            ICurrentUserService currentUserService,
+            ITicketsRepository ticketsRepository,
+            IUnitOfWork unitOfWork)
         {
             _ticketCommentsRepository = ticketCommentsRepository;
             _currentUserService = currentUserService;
             _ticketsRepository = ticketsRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Result<TicketsCreateComment>> CreateTicketCommentAsync(string ticketIdStr, TicketsCreateComment ticketsCreateComment)
@@ -45,6 +51,7 @@ namespace TicketsSystem.Core.Services
             };
 
             await _ticketCommentsRepository.Create(ticketComment);
+            await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
         }
@@ -87,7 +94,8 @@ namespace TicketsSystem.Core.Services
             ticketComment.Content = ticketsUpdateComment.Content;
             ticketComment.IsInternal = ticketsUpdateComment.IsInternal;
 
-            await _ticketCommentsRepository.Update(ticketComment);
+            _ticketCommentsRepository.Update(ticketComment);
+            await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
         }

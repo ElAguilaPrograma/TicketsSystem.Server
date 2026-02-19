@@ -23,13 +23,15 @@ namespace TicketsSystem.Core.Services
         private readonly LoginRequestValidation _loginRequestValidation;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IConfiguration _config;
+        private readonly IUnitOfWork _unitOfWork;
         public UserService(
             IUserRepository userRepository,
             UserCreateValidator validationCreateRules,
             UserUpdateValidator updateUserUpdateRules,
             IPasswordHasher<User> passwordHasher,
             LoginRequestValidation loginValidationsRules,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IUnitOfWork unitOfWork)
         {
             _userRepository = userRepository;
             _userCreateValidator = validationCreateRules;
@@ -37,6 +39,7 @@ namespace TicketsSystem.Core.Services
             _passwordHasher = passwordHasher;
             _loginRequestValidation = loginValidationsRules;
             _config = configuration;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Result<IEnumerable<UserReadDto>>> GetAllUsersAsync()
@@ -83,6 +86,7 @@ namespace TicketsSystem.Core.Services
             newUser.PasswordHash = _passwordHasher.HashPassword(newUser, userCreateDto.Password);
 
             await _userRepository.Create(newUser);
+            await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
         }
@@ -146,7 +150,8 @@ namespace TicketsSystem.Core.Services
             user.IsActive = userUpdateDto.IsActive;
             user.PasswordHash = _passwordHasher.HashPassword(user, userUpdateDto.Password);
 
-            await _userRepository.Update(user);
+            _userRepository.Update(user);
+            await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
         }
@@ -212,7 +217,8 @@ namespace TicketsSystem.Core.Services
 
             user.IsActive = !user.IsActive;
 
-            await _userRepository.Update(user);
+            _userRepository.Update(user);
+            await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
         }
