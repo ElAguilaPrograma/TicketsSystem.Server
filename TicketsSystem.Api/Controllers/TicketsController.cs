@@ -61,5 +61,13 @@ namespace TicketsSystem.Api.Controllers
         [HttpPost("searchtickets/{query}")]
         public async Task<IActionResult> SearchTickets(string query, int? statusId, int? priorityId)
             => ProcessResult(await _ticketsService.SearchTicketsAsync(query, statusId, priorityId));
+
+        [HttpPost("closetickets/{ticketId}")]
+        public async Task<IActionResult> CloseTickets(string ticketId)
+            => ProcessResult(await _ticketsService.CloseTicketsAsync(ticketId));
+
+        [HttpPost("reopentickets/{ticketId}")]
+        public async Task<IActionResult> ReopenTickets(string ticketId)
+            => ProcessResult(await _ticketsService.ReopenTicketsAsync(ticketId));
     }
 }

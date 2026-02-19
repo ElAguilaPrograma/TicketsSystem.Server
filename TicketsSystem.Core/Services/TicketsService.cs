@@ -291,7 +291,51 @@ namespace TicketsSystem.Core.Services
             return Result.Ok(ticketsReadDtos);
         }
 
-        // Falta completar tickets y reabrirlos.
+        public async Task<Result> CloseTicketsAsync(string ticketIdStr)
+        {
+            if (string.IsNullOrWhiteSpace(ticketIdStr))
+                return Result.Fail(new BadRequestError("The ticket id is not valid"));
+
+            Guid ticketId = Guid.Parse(ticketIdStr);
+
+            var ticket = await _ticketsRepository.GetById(ticketId);
+            if (ticket == null)
+                return Result.Fail(new NotFoundError("The ticket is does not exist"));
+
+            if (ticket.StatusId == 4)
+                return Result.Fail(new BadRequestError("The ticket is already close"));
+
+            ticket.StatusId = 4;
+
+            _ticketsRepository.Update(ticket);
+
+            await _unitOfWork.SaveChangesAsync();
+
+            return Result.Ok();
+        }
+
+        public async Task<Result> ReopenTicketsAsync(string ticketIdStr)
+        {
+            if (string.IsNullOrWhiteSpace(ticketIdStr))
+                return Result.Fail(new BadRequestError("The ticket id is not valid"));
+
+            Guid ticketId = Guid.Parse(ticketIdStr);
+
+            var ticket = await _ticketsRepository.GetById(ticketId);
+            if (ticket == null)
+                return Result.Fail(new NotFoundError("The ticket is does not exist"));
+
+            if (ticket.StatusId != 4)
+                return Result.Fail(new BadRequestError("The ticket is already open"));
+
+            ticket.StatusId = 5;
+
+            _ticketsRepository.Update(ticket);
+
+            await _unitOfWork.SaveChangesAsync();
+
+            return Result.Ok();
+        }
 
     }
 }
