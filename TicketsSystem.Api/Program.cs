@@ -144,6 +144,7 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<ITicketsService, TicketsService>();
 builder.Services.AddScoped<IGetUserRole, GetUserRoleService>();
 builder.Services.AddScoped<ITicketCommetsService, TicketCommentsService>();
+builder.Services.AddScoped<ITicketHistoryService, TicketHistoryService>();
 
 // Validations
 builder.Services.AddTransient<UserCreateValidator, UserCreateValidator>();

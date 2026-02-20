@@ -35,5 +35,8 @@ namespace TicketsSystem.Data.Repositories
                 }
             }
         }
+
+        public async Task<IEnumerable<TicketHistory>> GetTicketHistories(Guid ticketId)
+            => await _ticketHistory.Where(t => t.TicketId == ticketId).ToListAsync();
     }
 }

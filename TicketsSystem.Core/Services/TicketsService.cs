@@ -1,5 +1,6 @@
 ﻿using FluentResults;
 using TicketsSystem.Core.DTOs.TicketsDTO;
+using TicketsSystem.Core.DTOs.TicketsHistoryDTO;
 using TicketsSystem.Core.Errors;
 using TicketsSystem.Core.Interfaces;
 using TicketsSystem.Core.Validations.TicketsValidations;
@@ -360,5 +361,6 @@ namespace TicketsSystem.Core.Services
 
             return Result.Ok();
         }
+
     }
 }

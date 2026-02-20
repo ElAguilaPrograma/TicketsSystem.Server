@@ -7,6 +7,7 @@ namespace TicketsSystem.Domain.Interfaces
 {
     public interface ITicketsHistoryRepository : IGenericRepository<TicketHistory>
     {
+        Task<IEnumerable<TicketHistory>> GetTicketHistories(Guid ticketId);
         Task TrackChanges(Ticket ticket, Guid userId);
     }
 }
