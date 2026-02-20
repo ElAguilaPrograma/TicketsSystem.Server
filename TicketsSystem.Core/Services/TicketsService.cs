@@ -1,11 +1,12 @@
 ﻿using FluentResults;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Sockets;
 using TicketsSystem.Core.DTOs.TicketsDTO;
 using TicketsSystem.Core.Errors;
+using TicketsSystem.Core.Interfaces;
 using TicketsSystem.Core.Validations.TicketsValidations;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Interfaces;
-using TicketsSystem.Core.Interfaces;
 
 namespace TicketsSystem.Core.Services
 {
@@ -19,6 +20,7 @@ namespace TicketsSystem.Core.Services
         private readonly TicketsCreateValidator _ticketsCreateValidator;
         private readonly TicketsUpdateValidator _ticketsUpdateValidator;
         private readonly IUserRepository _userRepository;
+        private readonly ITicketsHistoryRepository _ticketsHistoryRepository;
         private readonly IUnitOfWork _unitOfWork;
         public TicketsService(ITicketsRepository ticketsRepository,
             ICurrentUserService currentUserService,
@@ -26,6 +28,7 @@ namespace TicketsSystem.Core.Services
             IGetUserRole getUserRole,
             TicketsUpdateValidator ticketsUpdateValidator,
             IUserRepository userRepository,
+            ITicketsHistoryRepository ticketsHistoryRepository,
             IUnitOfWork unitOfWork)
         {
             _ticketsRepository = ticketsRepository;
@@ -34,6 +37,7 @@ namespace TicketsSystem.Core.Services
             _ticketsCreateValidator = ticketsCreateValidator;
             _ticketsUpdateValidator = ticketsUpdateValidator;
             _userRepository = userRepository;
+            _ticketsHistoryRepository = ticketsHistoryRepository;
             _unitOfWork = unitOfWork;
         }
 
@@ -123,6 +127,16 @@ namespace TicketsSystem.Core.Services
             };
 
             await _ticketsRepository.Create(newTicket);
+
+            var newTicketHistory = new TicketHistory
+            {
+                Ticket = newTicket,
+                ChangedByUserId = _currentUserService.GetCurrentUserId(),
+                FieldName = "Ticket Created"
+            };
+
+            await _ticketsHistoryRepository.Create(newTicketHistory);
+
             await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
@@ -171,6 +185,7 @@ namespace TicketsSystem.Core.Services
             }
 
             _ticketsRepository.Update(ticket);
+
             await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
@@ -336,6 +351,5 @@ namespace TicketsSystem.Core.Services
 
             return Result.Ok();
         }
-
     }
 }

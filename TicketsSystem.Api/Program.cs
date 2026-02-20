@@ -135,6 +135,7 @@ builder.Services.AddDbContext<SystemTicketsContext>(options =>
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITicketsRepository, TicketsRepository>();
 builder.Services.AddScoped<ITicketCommentsRepository, TicketCommentsRepository>();
+builder.Services.AddScoped<ITicketsHistoryRepository, TicketsHistoryRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Services
