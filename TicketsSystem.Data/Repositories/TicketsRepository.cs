@@ -69,24 +69,4 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
 
     public Task<bool> TicketExist(Guid ticketId)
         => _tickets.AnyAsync(t  => t.TicketId == ticketId);
-
-    /*
-    public Task<string> TicketModifiedProperties(Ticket ticket)
-    {
-        string propertiesModified = string.Empty;
-        string oldValue = string.Empty;
-        string newValue = string.Empty;
-
-        var entry = _dbSet.Entry(ticket);
-        foreach (var property in entry.Properties)
-        {
-            if (property.IsModified)
-            {
-                propertiesModified += $" {property.Metadata.Name}";
-                oldValue += property.OriginalValue;
-                newValue
-            }
-        }
-    }
-    */
 }

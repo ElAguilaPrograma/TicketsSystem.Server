@@ -1,6 +1,4 @@
 ﻿using FluentResults;
-using Microsoft.AspNetCore.Mvc;
-using System.Net.Sockets;
 using TicketsSystem.Core.DTOs.TicketsDTO;
 using TicketsSystem.Core.Errors;
 using TicketsSystem.Core.Interfaces;
@@ -132,6 +130,7 @@ namespace TicketsSystem.Core.Services
             {
                 Ticket = newTicket,
                 ChangedByUserId = _currentUserService.GetCurrentUserId(),
+                ChangeGroupId = Guid.NewGuid(),
                 FieldName = "Ticket Created"
             };
 
@@ -184,8 +183,11 @@ namespace TicketsSystem.Core.Services
                 ticket.AssignedToUserId = ticketsUpdateDto.AssignedToUserId;
             }
 
-            _ticketsRepository.Update(ticket);
+            if (ticketsUpdateDto.StatusId == 4)
+                ticket.ClosedAt = DateTime.UtcNow;
 
+            _ticketsRepository.Update(ticket);
+            await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
             await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
@@ -218,6 +220,7 @@ namespace TicketsSystem.Core.Services
             ticket.PriorityId = ticketsUpdateDto.PriorityId;
 
             _ticketsRepository.Update(ticket);
+            await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
             await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
@@ -246,6 +249,7 @@ namespace TicketsSystem.Core.Services
             ticket.UpdatedAt = DateTime.UtcNow;
 
             _ticketsRepository.Update(ticket);
+            await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
             await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
@@ -271,6 +275,7 @@ namespace TicketsSystem.Core.Services
             ticket.UpdatedAt = DateTime.UtcNow;
 
             _ticketsRepository.Update(ticket);
+            await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
             await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
@@ -321,9 +326,11 @@ namespace TicketsSystem.Core.Services
                 return Result.Fail(new BadRequestError("The ticket is already close"));
 
             ticket.StatusId = 4;
+            ticket.UpdatedAt = DateTime.UtcNow;
+            ticket.ClosedAt = DateTime.UtcNow;
 
             _ticketsRepository.Update(ticket);
-
+            await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
             await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
@@ -344,9 +351,11 @@ namespace TicketsSystem.Core.Services
                 return Result.Fail(new BadRequestError("The ticket is already open"));
 
             ticket.StatusId = 5;
+            ticket.UpdatedAt = DateTime.UtcNow;
+            ticket.ClosedAt = null;
 
             _ticketsRepository.Update(ticket);
-
+            await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
             await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
