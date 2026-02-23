@@ -13,6 +13,8 @@ using TicketsSystem.Data.Repositories;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Interfaces;
 using TicketsSystem.Core.Interfaces;
+using TicketsSystem.Api.Hubs;
+using TicketsSystem.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -126,18 +128,32 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         }
     };
 });
+// SignalR 
+builder.Services.AddSignalR();
+builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"]; // Esto lo debe enviar angular
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/ticketHub"))
+                context.Token = accessToken;
+            return Task.CompletedTask;
+        }
+    };
+});
 // Database conexion
 builder.Services.AddDbContext<SystemTicketsContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")));
-
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITicketsRepository, TicketsRepository>();
 builder.Services.AddScoped<ITicketCommentsRepository, TicketCommentsRepository>();
 builder.Services.AddScoped<ITicketsHistoryRepository, TicketsHistoryRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
@@ -145,7 +161,7 @@ builder.Services.AddScoped<ITicketsService, TicketsService>();
 builder.Services.AddScoped<IGetUserRole, GetUserRoleService>();
 builder.Services.AddScoped<ITicketCommetsService, TicketCommentsService>();
 builder.Services.AddScoped<ITicketHistoryService, TicketHistoryService>();
-
+builder.Services.AddScoped<ITicketHubService, TicketHubService>();
 // Validations
 builder.Services.AddTransient<UserCreateValidator, UserCreateValidator>();
 builder.Services.AddTransient<UserUpdateValidator, UserUpdateValidator>();
@@ -167,6 +183,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.MapHub<TicketHub>("/ticketHub");
 
 app.MapControllers();
 

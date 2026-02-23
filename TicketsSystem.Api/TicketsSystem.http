@@ -1,6 +1,34 @@
 @TicketsSystem_HostAddress = http://localhost:5056
 
-GET {{TicketsSystem_HostAddress}}/weatherforecast/
+### Login
+POST {{TicketsSystem_HostAddress}}/api/authentication/login
+Content-Type: application/json
 Accept: application/json
+
+{
+  "email": "prueba3@gmail.com",
+  "password": "Prueba3"
+}
+
+###
+
+### Obtener todos los tickets (rol Admin)
+GET {{TicketsSystem_HostAddress}}/api/tickets/getalltickets
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMWZjNDI0MC05ZWViLTQxMWYtYTk0MC1hODBkYzlkMjU0ZWUiLCJlbWFpbCI6InBydWViYTNAZ21haWwuY29tIiwianRpIjoiYWY1OTE4MmMtNjZjNS00NTg1LThhZjMtY2Y1OWU4OWVkMTFhIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3NzIxNjMzMDIsImlzcyI6IlRpY2tldHNTeXN0ZW1BcGkiLCJhdWQiOiJUaWNrZXRzU3lzdGVtVXNlcnMifQ.aVXvI--vsMRd81rQ-V6yTIt3zOYYxT4re1UN2qjzAQg
+
+###
+
+### Crear un nuevo ticket
+POST {{TicketsSystem_HostAddress}}/api/tickets/createticket
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMWZjNDI0MC05ZWViLTQxMWYtYTk0MC1hODBkYzlkMjU0ZWUiLCJlbWFpbCI6InBydWViYTNAZ21haWwuY29tIiwianRpIjoiYWY1OTE4MmMtNjZjNS00NTg1LThhZjMtY2Y1OWU4OWVkMTFhIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3NzIxNjMzMDIsImlzcyI6IlRpY2tldHNTeXN0ZW1BcGkiLCJhdWQiOiJUaWNrZXRzU3lzdGVtVXNlcnMifQ.aVXvI--vsMRd81rQ-V6yTIt3zOYYxT4re1UN2qjzAQg
+
+{
+    "title": "No manches porque me da 401",
+    "description": "Probando desde http file lol.",
+    "priorityId": 1,
+    "createdByUserId": "31fc4240-9eeb-411f-a940-a80dc9d254ee"
+}
 
 ###

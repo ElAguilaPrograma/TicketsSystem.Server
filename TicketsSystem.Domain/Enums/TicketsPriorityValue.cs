@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace TicketsSystem.Domain.Enums
+﻿namespace TicketsSystem.Domain.Enums
 {
     public enum TicketsPriorityValue
     {

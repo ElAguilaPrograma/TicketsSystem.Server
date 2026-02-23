@@ -1,6 +1,5 @@
 ﻿using FluentResults;
 using TicketsSystem.Core.DTOs.TicketsDTO;
-using TicketsSystem.Core.DTOs.TicketsHistoryDTO;
 using TicketsSystem.Core.Errors;
 using TicketsSystem.Core.Interfaces;
 using TicketsSystem.Core.Validations.TicketsValidations;
@@ -21,6 +20,8 @@ namespace TicketsSystem.Core.Services
         private readonly IUserRepository _userRepository;
         private readonly ITicketsHistoryRepository _ticketsHistoryRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ITicketHubService _ticketHubService;
+
         public TicketsService(ITicketsRepository ticketsRepository,
             ICurrentUserService currentUserService,
             TicketsCreateValidator ticketsCreateValidator,
@@ -28,7 +29,8 @@ namespace TicketsSystem.Core.Services
             TicketsUpdateValidator ticketsUpdateValidator,
             IUserRepository userRepository,
             ITicketsHistoryRepository ticketsHistoryRepository,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            ITicketHubService ticketHubService)
         {
             _ticketsRepository = ticketsRepository;
             _currentUserService = currentUserService;
@@ -38,6 +40,7 @@ namespace TicketsSystem.Core.Services
             _userRepository = userRepository;
             _ticketsHistoryRepository = ticketsHistoryRepository;
             _unitOfWork = unitOfWork;
+            _ticketHubService = ticketHubService;
         }
 
         public async Task<Result<IEnumerable<TicketsReadDto>>> GetAllTicketsAsync()
@@ -138,6 +141,24 @@ namespace TicketsSystem.Core.Services
             await _ticketsHistoryRepository.Create(newTicketHistory);
 
             await _unitOfWork.SaveChangesAsync();
+
+            // Notify via SignalR
+            var ticketWithData = await _ticketsRepository.GetTicketById(newTicket.TicketId);
+            if (ticketWithData != null)
+            {
+                var ticketReadDto = new TicketsReadDto
+                {
+                    TicketId = ticketWithData.TicketId,
+                    Title = ticketWithData.Title,
+                    Description = ticketWithData.Description,
+                    StatusName = ticketWithData.Status?.Name,
+                    PriorityName = ticketWithData.Priority?.Name,
+                    CreatedAt = ticketWithData.CreatedAt,
+                    UpdatedAt = ticketWithData.UpdatedAt,
+                    ClosedAt = ticketWithData.ClosedAt
+                };
+                await _ticketHubService.NotifyTicketCreated(ticketReadDto);
+            }
 
             return Result.Ok();
         }

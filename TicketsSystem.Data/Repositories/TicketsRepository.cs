@@ -48,6 +48,9 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
     public async Task<Ticket?> GetTicketById(Guid ticketId)
     {
         return await _tickets
+            .Include(t => t.Status)
+            .Include(t => t.Priority)
+            .Include(t => t.AssignedToUser)
             .FirstOrDefaultAsync(t => t.TicketId == ticketId);
     }
 
