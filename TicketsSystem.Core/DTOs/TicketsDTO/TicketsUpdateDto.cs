@@ -7,6 +7,7 @@ public class TicketsUpdateDto
     public int StatusId { get; set; }
     public int PriorityId { get; set; }
     public Guid? AssignedToUserId { get; set; }
+    public Guid CreatedByUserId { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public DateTime? ClosedAt { get; set; }
 }

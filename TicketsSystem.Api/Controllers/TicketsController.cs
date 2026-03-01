@@ -4,8 +4,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using TicketsSystem.Core.DTOs.TicketsDTO;
-using TicketsSystem.Core.Errors;
-using TicketsSystem.Core.Services;
 using TicketsSystem.Core.Interfaces;
 
 namespace TicketsSystem.Api.Controllers

@@ -6,5 +6,6 @@ namespace TicketsSystem.Core.Interfaces
     public interface ITicketHubService
     {
         Task NotifyTicketCreated(TicketsReadDto ticket);
+        Task NotifyTicketStatusChanged(TicketsReadDto ticket, Guid userId);
     }
 }

@@ -18,5 +18,10 @@ namespace TicketsSystem.Api.Services
         {
             await _hubContext.Clients.Group("ManagementGroup").SendAsync("ReceiveNewTicket", ticket);
         }
+
+        public async Task NotifyTicketStatusChanged(TicketsReadDto ticket, Guid userId)
+        {
+            await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNewTicketStatusChange", ticket);
+        }
     }
 }

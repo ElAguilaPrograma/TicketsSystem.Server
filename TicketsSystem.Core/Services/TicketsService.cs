@@ -8,8 +8,6 @@ using TicketsSystem.Domain.Interfaces;
 
 namespace TicketsSystem.Core.Services
 {
-
-
     public class TicketsService : ITicketsService
     {
         private readonly ITicketsRepository _ticketsRepository;
@@ -156,6 +154,7 @@ namespace TicketsSystem.Core.Services
                     Description = ticketWithData.Description,
                     StatusName = ticketWithData.Status?.Name,
                     PriorityName = ticketWithData.Priority?.Name,
+                    AssignedToUser = ticketWithData.AssignedToUser?.FullName ?? "To be defined",
                     CreatedAt = ticketWithData.CreatedAt,
                     UpdatedAt = ticketWithData.UpdatedAt,
                     ClosedAt = ticketWithData.ClosedAt
@@ -189,6 +188,8 @@ namespace TicketsSystem.Core.Services
                 return Result.Fail(errorMessages);
             }
 
+            int originalStatusId = ticket.StatusId;
+
             ticket.Title = ticketsUpdateDto.Title;
             ticket.Description = ticketsUpdateDto.Description;
             ticket.StatusId = ticketsUpdateDto.StatusId;
@@ -214,6 +215,28 @@ namespace TicketsSystem.Core.Services
             _ticketsRepository.Update(ticket);
             await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
             await _unitOfWork.SaveChangesAsync();
+
+            if (ticketsUpdateDto.StatusId != originalStatusId)
+            {
+                var updatedTicket = await _ticketsRepository.GetTicketById(ticketId);
+                if (updatedTicket != null)
+                {
+                    var newTicketReadDto = new TicketsReadDto
+                    {
+                        TicketId = updatedTicket.TicketId,
+                        Title = updatedTicket.Title,
+                        Description = updatedTicket.Description,
+                        StatusName = updatedTicket.Status?.Name,
+                        PriorityName = updatedTicket.Priority?.Name,
+                        AssignedToUser = updatedTicket.AssignedToUser?.FullName ?? "To be defined",
+                        CreatedAt = updatedTicket.CreatedAt,
+                        UpdatedAt = updatedTicket.UpdatedAt,
+                        ClosedAt = updatedTicket.ClosedAt
+                    };
+
+                    await _ticketHubService.NotifyTicketStatusChanged(newTicketReadDto, updatedTicket.CreatedByUserId);
+                }
+            }
 
             return Result.Ok();
         }
@@ -307,8 +330,8 @@ namespace TicketsSystem.Core.Services
         }
 
         public async Task<Result<IEnumerable<TicketsReadDto>>> SearchTicketsAsync(
-            string query, 
-            int? statusValue = null, 
+            string query,
+            int? statusValue = null,
             int? priorityValue = null)
         {
             if (string.IsNullOrWhiteSpace(query) || query == null)
@@ -385,6 +408,5 @@ namespace TicketsSystem.Core.Services
 
             return Result.Ok();
         }
-
     }
 }
