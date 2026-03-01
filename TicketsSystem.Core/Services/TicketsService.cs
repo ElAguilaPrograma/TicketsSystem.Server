@@ -54,6 +54,7 @@ namespace TicketsSystem.Core.Services
                 Description = t.Description,
                 StatusName = t.Status.Name,
                 PriorityName = t.Priority.Name,
+                AssignedToUser = t.AssignedToUser?.FullName ?? "To be defined",
                 CreatedAt = t.CreatedAt,
                 UpdatedAt = t.UpdatedAt,
                 ClosedAt = t.ClosedAt
@@ -76,6 +77,7 @@ namespace TicketsSystem.Core.Services
                 Description = t.Description,
                 StatusName = t.Status.Name,
                 PriorityName = t.Priority.Name,
+                AssignedToUser = t.AssignedToUser?.FullName ?? "To be defined",
                 CreatedAt = t.CreatedAt,
                 UpdatedAt = t.UpdatedAt,
                 ClosedAt = t.ClosedAt
@@ -97,6 +99,7 @@ namespace TicketsSystem.Core.Services
                 Description = t.Description,
                 StatusName = t.Status.Name,
                 PriorityName = t.Priority.Name,
+                AssignedToUser = t.AssignedToUser?.FullName ?? "To be defined",
                 CreatedAt = t.CreatedAt,
                 UpdatedAt = t.UpdatedAt,
                 ClosedAt = t.ClosedAt
