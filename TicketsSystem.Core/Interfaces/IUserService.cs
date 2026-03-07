@@ -8,6 +8,7 @@ namespace TicketsSystem.Core.Interfaces
         Task<Result> CreateNewUserAsync(UserCreateDto userCreateDto);
         Task<Result> DeactivateOrActivateAUserAsync(string userIdStr);
         Task<Result<IEnumerable<UserReadDto>>> GetAllUsersAsync();
+        Result<CurrentUserDto> GetCurrentUser();
         Task<Result<LoginSuccessDto>> LoginAsync(LoginRequest request);
         Task<Result<IEnumerable<UserReadDto>>> SearchUserAsync(string query);
         Task<Result> UpdateUserInformationAsync(UserUpdateDto userUpdateDto, string userIdStr);

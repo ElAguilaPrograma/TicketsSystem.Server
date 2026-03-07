@@ -37,11 +37,34 @@ namespace TicketsSystem.Api.Controllers
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
-            => ProcessResult(await _userService.LoginAsync(request));
+        {
+            var result = await _userService.LoginAsync(request);
+            if (result.IsSuccess)
+            {
+                var loginData = result.Value;
+                var cookieOptions = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = loginData.Expiration
+                };
+
+                Response.Cookies.Append("AuthToken", loginData.Token, cookieOptions);
+                return Ok(new { message = "Login Successful" });
+            }
+
+            return ProcessResult(result);
+        }
 
         [HttpPost("deactivateauser/{userId}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeactivateAUser(string userId)
             => ProcessResult(await _userService.DeactivateOrActivateAUserAsync(userId));
+
+        [HttpGet("getcurrentuser")]
+        [Authorize]
+        public IActionResult GetCurrentUser()
+            => ProcessResult(_userService.GetCurrentUser());
     }
 }

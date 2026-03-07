@@ -11,6 +11,8 @@ using TicketsSystem.Core.Errors;
 using TicketsSystem.Core.Validations.UserValidations;
 using TicketsSystem.Core.DTOs.UserDTO;
 using TicketsSystem.Core.Interfaces;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace TicketsSystem.Core.Services
 {
@@ -24,6 +26,7 @@ namespace TicketsSystem.Core.Services
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IConfiguration _config;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICurrentUserService _currentUserService;
         public UserService(
             IUserRepository userRepository,
             UserCreateValidator validationCreateRules,
@@ -31,7 +34,8 @@ namespace TicketsSystem.Core.Services
             IPasswordHasher<User> passwordHasher,
             LoginRequestValidation loginValidationsRules,
             IConfiguration configuration,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            ICurrentUserService currentUserService)
         {
             _userRepository = userRepository;
             _userCreateValidator = validationCreateRules;
@@ -40,6 +44,7 @@ namespace TicketsSystem.Core.Services
             _loginRequestValidation = loginValidationsRules;
             _config = configuration;
             _unitOfWork = unitOfWork;
+            _currentUserService = currentUserService;
         }
 
         public async Task<Result<IEnumerable<UserReadDto>>> GetAllUsersAsync()
@@ -221,6 +226,22 @@ namespace TicketsSystem.Core.Services
             await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok();
+        }
+
+        public Result<CurrentUserDto> GetCurrentUser()
+        {
+            var userId = _currentUserService.GetCurrentUserId();
+            var email = _currentUserService.GetCurrentUserEmail();
+            var role = _currentUserService.GetCurrentUserRole();
+
+            var currentUserClaimData = new CurrentUserDto()
+            {
+                UserId = userId,
+                Email = email,
+                Role = role
+            };
+
+            return Result.Ok(currentUserClaimData);
         }
     }
 }
