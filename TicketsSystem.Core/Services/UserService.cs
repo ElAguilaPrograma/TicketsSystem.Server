@@ -55,7 +55,6 @@ namespace TicketsSystem.Core.Services
                 UserId = u.UserId,
                 FullName = u.FullName,
                 Email = u.Email,
-                Password = " ",
                 Role = u.Role,
                 IsActive = u.IsActive,
                 CreatedAt = u.CreatedAt
@@ -199,7 +198,6 @@ namespace TicketsSystem.Core.Services
                 UserId = u.UserId,
                 FullName = u.FullName,
                 Email = u.Email,
-                Password = " ",
                 Role = u.Role,
                 IsActive = u.IsActive,
                 CreatedAt = u.CreatedAt
