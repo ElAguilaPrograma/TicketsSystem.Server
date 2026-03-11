@@ -70,15 +70,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         RoleClaimType = ClaimTypes.Role
     };
 
-    options.Events = new JwtBearerEvents
-    {
-        OnMessageReceived = context =>
-        {
-            context.Token = context.Request.Cookies["AuthToken"];
-            return Task.CompletedTask;
-        }
-    };
-    
     // DEBUG: Enable detailed errors
     options.IncludeErrorDetails = true;
 
@@ -90,6 +81,26 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 
     options.Events = new JwtBearerEvents
     {
+        OnMessageReceived = context =>
+        {
+            // Read JWT from the HttpOnly cookie (browser requests)
+            var cookieToken = context.Request.Cookies["AuthToken"];
+            if (!string.IsNullOrEmpty(cookieToken))
+                context.Token = cookieToken;
+
+            // Read JWT from query string for SignalR connections
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/ticketHub"))
+                context.Token = accessToken;
+
+            Console.WriteLine("--------------------------------------------------------------");
+            var tokenLen = context.Token?.Length ?? 0;
+            var tokenPreview = tokenLen > 10 ? context.Token?.Substring(0, 10) : context.Token;
+            Console.WriteLine($"[RECEIVED] Token (Len={tokenLen}): '{tokenPreview}...'");
+            Console.WriteLine("--------------------------------------------------------------");
+            return Task.CompletedTask;
+        },
         OnAuthenticationFailed = context =>
         {
             Console.WriteLine("--------------------------------------------------------------");
@@ -116,22 +127,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
             Console.WriteLine($"[CHALLENGE] Error: '{context.Error}', Desc: '{context.ErrorDescription}'");
             if (context.AuthenticateFailure != null)
             {
-                 Console.WriteLine($"[CHALLENGE] AuthenticateFailure: {context.AuthenticateFailure.Message}");
-                 Console.WriteLine($"[CHALLENGE] Failure Trace: {context.AuthenticateFailure.StackTrace}");
+                Console.WriteLine($"[CHALLENGE] AuthenticateFailure: {context.AuthenticateFailure.Message}");
+                Console.WriteLine($"[CHALLENGE] Failure Trace: {context.AuthenticateFailure.StackTrace}");
             }
-            else 
+            else
             {
-                 Console.WriteLine("[CHALLENGE] No AuthenticateFailure exception found (Silent failure?).");
+                Console.WriteLine("[CHALLENGE] No AuthenticateFailure exception found (Silent failure?).");
             }
-            Console.WriteLine("--------------------------------------------------------------");
-            return Task.CompletedTask;
-        },
-        OnMessageReceived = context =>
-        {
-            Console.WriteLine("--------------------------------------------------------------");
-            var tokenLen = context.Token?.Length ?? 0;
-            var tokenPreview = tokenLen > 10 ? context.Token?.Substring(0, 10) : context.Token;
-            Console.WriteLine($"[RECEIVED] Token (Len={tokenLen}): '{tokenPreview}...'");
             Console.WriteLine("--------------------------------------------------------------");
             return Task.CompletedTask;
         }
@@ -150,20 +152,6 @@ builder.Services.AddCors(options =>
 });
 // SignalR 
 builder.Services.AddSignalR();
-builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
-{
-    options.Events = new JwtBearerEvents
-    {
-        OnMessageReceived = context =>
-        {
-            var accessToken = context.Request.Query["access_token"]; // Esto lo debe enviar angular
-            var path = context.HttpContext.Request.Path;
-            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/ticketHub"))
-                context.Token = accessToken;
-            return Task.CompletedTask;
-        }
-    };
-});
 // Database conexion
 builder.Services.AddDbContext<SystemTicketsContext>(options =>
     options.UseSqlServer(
