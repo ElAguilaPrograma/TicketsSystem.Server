@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Interfaces;
 
@@ -27,5 +27,16 @@ public class UserRepository : GenericRepository<User>, IUserRepository
         return await _users
             .Where(u => u.Email.ToLower().Contains(query) || u.FullName.ToLower().Contains(query))
             .ToListAsync();
+    }
+
+    public async Task<(IEnumerable<User> Users, int TotalCount)> GetAllPaginatedAsync(int page, int pageSize)
+    {
+        var totalCount = await _users.CountAsync();
+        var users = await _users
+            .OrderBy(u => u.FullName)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+        return (users, totalCount);
     }
 }

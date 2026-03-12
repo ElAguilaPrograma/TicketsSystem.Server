@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using FluentResults;
 using TicketsSystem.Core.Errors;
 using TicketsSystem.Core.Validations.UserValidations;
+using TicketsSystem.Core.DTOs;
 using TicketsSystem.Core.DTOs.UserDTO;
 using TicketsSystem.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -47,10 +48,11 @@ namespace TicketsSystem.Core.Services
             _currentUserService = currentUserService;
         }
 
-        public async Task<Result<IEnumerable<UserReadDto>>> GetAllUsersAsync()
+        public async Task<Result<PagedResult<UserReadDto>>> GetAllUsersAsync(int page, int pageSize)
         {
-            var users = await _userRepository.GetAll();
-            IEnumerable<UserReadDto> userDTOs = users.Select(u => new UserReadDto
+            var (users, totalCount) = await _userRepository.GetAllPaginatedAsync(page, pageSize);
+
+            var userDTOs = users.Select(u => new UserReadDto
             {
                 UserId = u.UserId,
                 FullName = u.FullName,
@@ -60,7 +62,16 @@ namespace TicketsSystem.Core.Services
                 CreatedAt = u.CreatedAt
             });
 
-            return Result.Ok(userDTOs);
+            var result = new PagedResult<UserReadDto>
+            {
+                Data = userDTOs,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+            };
+
+            return Result.Ok(result);
         }
 
         public async Task<Result> CreateNewUserAsync(UserCreateDto userCreateDto)

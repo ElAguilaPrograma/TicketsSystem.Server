@@ -1,4 +1,5 @@
-﻿using FluentResults;
+using FluentResults;
+using TicketsSystem.Core.DTOs;
 using TicketsSystem.Core.DTOs.UserDTO;
 
 namespace TicketsSystem.Core.Interfaces
@@ -7,7 +8,7 @@ namespace TicketsSystem.Core.Interfaces
     {
         Task<Result> CreateNewUserAsync(UserCreateDto userCreateDto);
         Task<Result> DeactivateOrActivateAUserAsync(string userIdStr);
-        Task<Result<IEnumerable<UserReadDto>>> GetAllUsersAsync();
+        Task<Result<PagedResult<UserReadDto>>> GetAllUsersAsync(int page, int pageSize);
         Result<CurrentUserDto> GetCurrentUser();
         Task<Result<LoginSuccessDto>> LoginAsync(LoginRequest request);
         Task<Result<IEnumerable<UserReadDto>>> SearchUserAsync(string query);

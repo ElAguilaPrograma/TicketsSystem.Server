@@ -20,8 +20,8 @@ namespace TicketsSystem.Api.Controllers
 
         [HttpGet("getallusers")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAllUsers()
-            => ProcessResult(await _userService.GetAllUsersAsync());
+        public async Task<IActionResult> GetAllUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 5)
+            => ProcessResult(await _userService.GetAllUsersAsync(page, pageSize));
 
         [HttpPost("createuser")]
         [Authorize(Roles = "Admin")]
