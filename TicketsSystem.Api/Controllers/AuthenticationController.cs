@@ -20,8 +20,24 @@ namespace TicketsSystem.Api.Controllers
 
         [HttpGet("getallusers")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAllUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 5)
-            => ProcessResult(await _userService.GetAllUsersAsync(page, pageSize));
+        public async Task<IActionResult> GetAllUsers(
+            [FromQuery] int page = 1, 
+            [FromQuery] int pageSize = 5, 
+            [FromQuery] string role = "All Roles", 
+            [FromQuery] string isActive = "All",
+            [FromQuery] string querySearch = "")
+        {
+            var filterDto = new GetAllUsersFilterDto
+            {
+                Page = page,
+                PageSize = pageSize,
+                Role = role,
+                IsActive = isActive,
+                QuerySearch = querySearch
+            };
+
+            return ProcessResult(await _userService.GetAllUsersWithFilterAsync(filterDto));
+        }
 
         [HttpPost("createuser")]
         [Authorize(Roles = "Admin")]

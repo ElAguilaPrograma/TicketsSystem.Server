@@ -9,11 +9,11 @@ using Microsoft.Extensions.Configuration;
 using FluentResults;
 using TicketsSystem.Core.Errors;
 using TicketsSystem.Core.Validations.UserValidations;
-using TicketsSystem.Core.DTOs;
 using TicketsSystem.Core.DTOs.UserDTO;
 using TicketsSystem.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using TicketsSystem.Core.DTOs.PaginationDTO;
 
 namespace TicketsSystem.Core.Services
 {
@@ -48,11 +48,32 @@ namespace TicketsSystem.Core.Services
             _currentUserService = currentUserService;
         }
 
-        public async Task<Result<PagedResult<UserReadDto>>> GetAllUsersAsync(int page, int pageSize)
+        public async Task<Result<PagedResult<UserReadDto>>> GetAllUsersWithFilterAsync(GetAllUsersFilterDto fiilterDto)
         {
-            var (users, totalCount) = await _userRepository.GetAllPaginatedAsync(page, pageSize);
+            var validRoles = new[] { "All Roles", "User", "Admin", "Agent" };
+            var validActiveFilters = new[] { "All", "Active", "Inactive" };
 
-            var userDTOs = users.Select(u => new UserReadDto
+            if (!validRoles.Contains(fiilterDto.Role))
+                return Result.Fail(new BadRequestError($"Invalid role. Valid roles are: {string.Join(", ", validRoles)}"));
+            if (!validActiveFilters.Contains(fiilterDto.IsActive))
+                return Result.Fail(new BadRequestError($"Invalid active filter. Valid values are: {string.Join(", ", validActiveFilters)}"));
+
+            bool? isActive = fiilterDto.IsActive switch
+            {
+                "All" => null,
+                "Active" => true,
+                "Inactive" => false,
+                _ => null
+            };
+
+            var (users, totalCount) = await _userRepository.GetAllPaginatedWithFilters(
+                fiilterDto.Page,
+                fiilterDto.PageSize,
+                fiilterDto.Role == "All Roles" ? null : fiilterDto.Role,
+                isActive,
+                fiilterDto.QuerySearch);
+
+            var usersDTOs = users.Select(u => new UserReadDto
             {
                 UserId = u.UserId,
                 FullName = u.FullName,
@@ -64,11 +85,11 @@ namespace TicketsSystem.Core.Services
 
             var result = new PagedResult<UserReadDto>
             {
-                Data = userDTOs,
+                Data = usersDTOs,
                 TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
-                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+                Page = fiilterDto.Page,
+                PageSize = fiilterDto.PageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / fiilterDto.PageSize)
             };
 
             return Result.Ok(result);
@@ -228,6 +249,9 @@ namespace TicketsSystem.Core.Services
 
             if (user == null)
                 return Result.Fail(new NotFoundError("The user does not exist"));
+
+            if (user.UserId == _currentUserService.GetCurrentUserId())
+                return Result.Fail(new BadRequestError("An administrator cannot deactivate themselves."));
 
             user.IsActive = !user.IsActive;
 
