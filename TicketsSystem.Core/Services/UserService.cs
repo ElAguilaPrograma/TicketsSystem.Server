@@ -97,7 +97,7 @@ namespace TicketsSystem.Core.Services
                 TotalPages = (int)Math.Ceiling((double)totalCount / fiilterDto.PageSize)
             };
 
-            return Result.Ok(result);
+            return Result.Ok(result).WithSuccess(new OkSuccess("Users retrieved successfully."));
         }
 
         public async Task<Result<UserReadDto>> GetUserById(string userIdStr)
@@ -118,7 +118,7 @@ namespace TicketsSystem.Core.Services
                 CreatedAt = user.CreatedAt
             };
 
-            return Result.Ok(userReadDto);
+            return Result.Ok(userReadDto).WithSuccess(new OkSuccess("User retrieved successfully."));
         }
 
         public async Task<Result> CreateNewUserAsync(UserCreateDto userCreateDto)
@@ -150,7 +150,7 @@ namespace TicketsSystem.Core.Services
             await _userRepository.Create(newUser);
             await _unitOfWork.SaveChangesAsync();
 
-            return Result.Ok();
+            return Result.Ok().WithSuccess(new CreatedSuccess("User created successfully."));
         }
 
         public async Task<Result<LoginSuccessDto>> LoginAsync(LoginRequest request)
@@ -185,7 +185,7 @@ namespace TicketsSystem.Core.Services
             {
                 Token = token,
                 Expiration = tokenExpiration
-            });
+            }).WithSuccess(new OkSuccess("Login successful."));
         }
 
         public async Task<Result> UpdateUserInformationAsync(UserUpdateDto userUpdateDto, string userIdStr)
@@ -236,7 +236,7 @@ namespace TicketsSystem.Core.Services
             _userRepository.Update(user);
             await _unitOfWork.SaveChangesAsync();
 
-            return Result.Ok();
+            return Result.Ok().WithSuccess(new OkSuccess("User information updated successfully."));
         }
 
         private string GenereteJwtToken(User user, DateTime expiration)
@@ -282,7 +282,7 @@ namespace TicketsSystem.Core.Services
                 CreatedAt = u.CreatedAt
             });
             
-            return Result.Ok(userDTO);
+            return Result.Ok(userDTO).WithSuccess(new OkSuccess("Users retrieved successfully."));
         }
 
         public async Task<Result> DeactivateOrActivateAUserAsync(string userIdStr)
@@ -305,7 +305,7 @@ namespace TicketsSystem.Core.Services
             _userRepository.Update(user);
             await _unitOfWork.SaveChangesAsync();
 
-            return Result.Ok();
+            return Result.Ok().WithSuccess(new OkSuccess("User status toggled successfully."));
         }
 
         public async Task<Result<CurrentUserDto>> GetCurrentUser()
@@ -324,7 +324,7 @@ namespace TicketsSystem.Core.Services
                 FullName = fullName
             };
 
-            return Result.Ok(currentUserClaimData);
+            return Result.Ok(currentUserClaimData).WithSuccess(new OkSuccess("Current user retrieved successfully."));
         }
 
         public async Task<Result<UserCountDto>> GetUsersCount()
@@ -339,7 +339,7 @@ namespace TicketsSystem.Core.Services
                 Agents = users.Where(u => u.Role == "Agent").Count()
             };
 
-            return Result.Ok(usersCount);
+            return Result.Ok(usersCount).WithSuccess(new OkSuccess("User count retrieved successfully."));
         }
 
         public async Task<Result<byte[]>> ExportUsersAsync(FilterUsersDto filterUsersDto)
@@ -387,7 +387,7 @@ namespace TicketsSystem.Core.Services
                 using var stream = new MemoryStream();
                 workbook.SaveAs(stream);
 
-                return Result.Ok(stream.ToArray());
+                return Result.Ok(stream.ToArray()).WithSuccess(new OkSuccess("Users exported successfully."));
             }
         }
     }

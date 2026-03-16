@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -53,7 +53,7 @@ namespace TicketsSystem.Core.Services
             await _ticketCommentsRepository.Create(ticketComment);
             await _unitOfWork.SaveChangesAsync();
 
-            return Result.Ok();
+            return Result.Ok().WithSuccess(new CreatedSuccess("Comment created successfully."));
         }
 
         public async Task<Result<IEnumerable<TicketsReadComment>>> GetTicketCommentsAsync(string ticketIdStr)
@@ -76,7 +76,7 @@ namespace TicketsSystem.Core.Services
                 IsInternal = tc.IsInternal
             });
 
-            return Result.Ok(ticketsReadComments);
+            return Result.Ok(ticketsReadComments).WithSuccess(new OkSuccess("Comments retrieved successfully."));
         }
 
         public async Task<Result> UpdateTicketCommentAsync(TickersUpdateComment ticketsUpdateComment, string ticketCommentIdStr)
@@ -97,7 +97,7 @@ namespace TicketsSystem.Core.Services
             _ticketCommentsRepository.Update(ticketComment);
             await _unitOfWork.SaveChangesAsync();
 
-            return Result.Ok();
+            return Result.Ok().WithSuccess(new OkSuccess("Comment updated successfully."));
         }
     }
 }

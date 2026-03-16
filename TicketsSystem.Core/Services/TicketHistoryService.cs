@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -61,7 +61,7 @@ namespace TicketsSystem.Core.Services
                     })
                 });
 
-            return Result.Ok(groupedHistory);
+            return Result.Ok(groupedHistory).WithSuccess(new OkSuccess("Ticket history retrieved successfully."));
         }
     }
 }

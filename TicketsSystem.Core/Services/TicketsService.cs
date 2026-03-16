@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 using TicketsSystem.Core.DTOs.TicketsDTO;
 using TicketsSystem.Core.Errors;
 using TicketsSystem.Core.Interfaces;
@@ -58,7 +58,7 @@ namespace TicketsSystem.Core.Services
                 ClosedAt = t.ClosedAt
             });
 
-            return Result.Ok(ticketsDTOs);
+            return Result.Ok(ticketsDTOs).WithSuccess(new OkSuccess("Tickets retrieved successfully."));
         }
 
         public async Task<Result<IEnumerable<TicketsReadDto>>> GetCurrentUserTicketsAsync()
@@ -81,7 +81,7 @@ namespace TicketsSystem.Core.Services
                 ClosedAt = t.ClosedAt
             });
 
-            return Result.Ok(ticketsDTOs);
+            return Result.Ok(ticketsDTOs).WithSuccess(new OkSuccess("User tickets retrieved successfully."));
         }
 
         public async Task<Result<IEnumerable<TicketsReadDto>>> GetTicketsByUserIdAsync(string userIdStr)
@@ -103,7 +103,7 @@ namespace TicketsSystem.Core.Services
                 ClosedAt = t.ClosedAt
             });
 
-            return Result.Ok(ticketsDTOs);
+            return Result.Ok(ticketsDTOs).WithSuccess(new OkSuccess("User tickets retrieved successfully."));
         }
 
         public async Task<Result> CreateATicketAsync(TicketsCreateDto ticketsCreateDto)
@@ -162,7 +162,7 @@ namespace TicketsSystem.Core.Services
                 await _ticketHubService.NotifyTicketCreated(ticketReadDto);
             }
 
-            return Result.Ok();
+            return Result.Ok().WithSuccess(new CreatedSuccess("Ticket created successfully."));
         }
 
         // Cuidado con las pruebas, revisar que el AssinedToUserId no sea un
@@ -238,7 +238,7 @@ namespace TicketsSystem.Core.Services
                 }
             }
 
-            return Result.Ok();
+            return Result.Ok().WithSuccess(new OkSuccess("Ticket updated successfully."));
         }
 
         public async Task<Result> UpdateTicketPriority(TicketsUpdateDto ticketsUpdateDto, string ticketIdStr)
@@ -271,7 +271,7 @@ namespace TicketsSystem.Core.Services
             await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
             await _unitOfWork.SaveChangesAsync();
 
-            return Result.Ok();
+            return Result.Ok().WithSuccess(new OkSuccess("Ticket priority updated successfully."));
         }
 
         public async Task<Result> AssingTicketAsync(string userIdStr, string ticketIdSrt)
@@ -300,7 +300,7 @@ namespace TicketsSystem.Core.Services
             await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
             await _unitOfWork.SaveChangesAsync();
 
-            return Result.Ok();
+            return Result.Ok().WithSuccess(new OkSuccess("Ticket assigned successfully."));
         }
 
         public async Task<Result> AcceptTickets(string ticketIdStr)
@@ -326,7 +326,7 @@ namespace TicketsSystem.Core.Services
             await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
             await _unitOfWork.SaveChangesAsync();
 
-            return Result.Ok();
+            return Result.Ok().WithSuccess(new AcceptedSuccess("Ticket accepted successfully."));
         }
 
         public async Task<Result<IEnumerable<TicketsReadDto>>> SearchTicketsAsync(
@@ -381,7 +381,7 @@ namespace TicketsSystem.Core.Services
             await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
             await _unitOfWork.SaveChangesAsync();
 
-            return Result.Ok();
+            return Result.Ok().WithSuccess(new OkSuccess("Ticket closed successfully."));
         }
 
         public async Task<Result> ReopenTicketsAsync(string ticketIdStr)
@@ -406,7 +406,7 @@ namespace TicketsSystem.Core.Services
             await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
             await _unitOfWork.SaveChangesAsync();
 
-            return Result.Ok();
+            return Result.Ok().WithSuccess(new OkSuccess("Ticket reopened successfully."));
         }
     }
 }
