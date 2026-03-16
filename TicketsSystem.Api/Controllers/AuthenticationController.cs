@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using TicketsSystem.Core.DTOs.UserDTO;
 using TicketsSystem.Core.Interfaces;
 
@@ -21,9 +22,9 @@ namespace TicketsSystem.Api.Controllers
         [HttpGet("getallusers")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllUsers(
-            [FromQuery] int page = 1, 
-            [FromQuery] int pageSize = 5, 
-            [FromQuery] string role = "All Roles", 
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 5,
+            [FromQuery] string role = "All Roles",
             [FromQuery] string isActive = "All",
             [FromQuery] string querySearch = "")
         {
@@ -82,8 +83,8 @@ namespace TicketsSystem.Api.Controllers
 
         [HttpGet("getcurrentuser")]
         [Authorize]
-        public IActionResult GetCurrentUser()
-            => ProcessResult(_userService.GetCurrentUser());
+        public async Task<IActionResult> GetCurrentUser()
+            => ProcessResult(await _userService.GetCurrentUser());
 
         [HttpPost("logout")]
         [Authorize]
@@ -103,5 +104,26 @@ namespace TicketsSystem.Api.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeactivateAUser(string userId)
             => ProcessResult(await _userService.DeactivateOrActivateAUserAsync(userId));
+
+
+        [HttpGet("getuserscount")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetUsersCount()
+            => ProcessResult(await _userService.GetUsersCount());
+
+        [HttpGet("exportusers")]
+        public async Task<IActionResult> ExportUsers([FromQuery] FilterUsersDto filterUsersDto)
+        {
+            var result = await _userService.ExportUsersAsync(filterUsersDto);
+            
+            if (result.IsSuccess)
+            {
+                return File(result.Value,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "users.xlsx");
+            }
+
+            return ProcessResult(result);
+        }
     }
 }

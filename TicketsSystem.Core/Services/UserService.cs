@@ -14,6 +14,7 @@ using TicketsSystem.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using TicketsSystem.Core.DTOs.PaginationDTO;
+using ClosedXML.Excel;
 
 namespace TicketsSystem.Core.Services
 {
@@ -261,20 +262,87 @@ namespace TicketsSystem.Core.Services
             return Result.Ok();
         }
 
-        public Result<CurrentUserDto> GetCurrentUser()
+        public async Task<Result<CurrentUserDto>> GetCurrentUser()
         {
             var userId = _currentUserService.GetCurrentUserId();
             var email = _currentUserService.GetCurrentUserEmail();
             var role = _currentUserService.GetCurrentUserRole();
+            var user = await _userRepository.GetById(userId);
+            var fullName = user.FullName;
 
             var currentUserClaimData = new CurrentUserDto()
             {
                 UserId = userId,
                 Email = email,
-                Role = role
+                Role = role,
+                FullName = fullName
             };
 
             return Result.Ok(currentUserClaimData);
+        }
+
+        public async Task<Result<UserCountDto>> GetUsersCount()
+        {
+            var users = await _userRepository.GetAll();
+
+            var usersCount = new UserCountDto
+            {
+                TotalUsers = users.Count(),
+                Users = users.Where(u => u.Role == "User").Count(),
+                Admins = users.Where(u =>  u.Role == "Admin").Count(),
+                Agents = users.Where(u => u.Role == "Agent").Count()
+            };
+
+            return Result.Ok(usersCount);
+        }
+
+        public async Task<Result<byte[]>> ExportUsersAsync(FilterUsersDto filterUsersDto)
+        {
+            var validRoles = new[] { "All Roles", "User", "Admin", "Agent" };
+            var validActiveFilters = new[] { "All", "Active", "Inactive" };
+
+            if (!validRoles.Contains(filterUsersDto.Role))
+                return Result.Fail(new BadRequestError($"Invalid role. Valid roles are: {string.Join(", ", validRoles)}"));
+            if (!validActiveFilters.Contains(filterUsersDto.IsActive))
+                return Result.Fail(new BadRequestError($"Invalid active filter. Valid values are: {string.Join(", ", validActiveFilters)}"));
+
+            bool? isActive = filterUsersDto.IsActive switch
+            {
+                "All" => null,
+                "Active" => true,
+                "Inactive" => false,
+                _ => null
+            };
+
+            var filterUsers = await _userRepository.ExportUsersWithFilters(filterUsersDto.Role, isActive);
+            var users = filterUsers.Select(u => new
+            {
+                UserId = u.UserId.ToString(),
+                FullName = u.FullName,
+                Email = u.Email,
+                Role = u.Role,
+                IsActive = u.IsActive ? "True" : "False",
+                CreatedAt = u.CreatedAt.AddMinutes(-filterUsersDto.TimezoneOffsetMinutes)
+            });
+
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Users");
+
+                worksheet.Cell(1, 1).Value = "UserId";
+                worksheet.Cell(1, 2).Value = "Full Name";
+                worksheet.Cell(1, 3).Value = "Email";
+                worksheet.Cell(1, 4).Value = "Role";
+                worksheet.Cell(1, 5).Value = "Is Active";
+                worksheet.Cell(1, 6).Value = "Created At";
+
+                worksheet.Cell(2, 1).InsertData(users);
+
+                using var stream = new MemoryStream();
+                workbook.SaveAs(stream);
+
+                return Result.Ok(stream.ToArray());
+            }
         }
     }
 }

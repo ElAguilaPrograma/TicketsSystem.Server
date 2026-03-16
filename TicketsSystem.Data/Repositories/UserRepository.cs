@@ -52,4 +52,19 @@ public class UserRepository : GenericRepository<User>, IUserRepository
         return (users, totalCount);
     }
 
+    public async Task<IEnumerable<User>> ExportUsersWithFilters(string? role = null, bool? isActive = null)
+    {
+        var query = _users.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(role) && role != "All Roles")
+            query = query.Where(u => u.Role == role);
+        if (isActive.HasValue)
+            query = query.Where(u => u.IsActive == isActive.Value);
+
+        var users = await query
+            .OrderBy(u => u.FullName)
+            .ToListAsync();
+
+        return users;
+    }
+
 }
