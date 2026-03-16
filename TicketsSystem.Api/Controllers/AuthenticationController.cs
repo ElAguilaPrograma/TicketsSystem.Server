@@ -40,12 +40,17 @@ namespace TicketsSystem.Api.Controllers
             return ProcessResult(await _userService.GetAllUsersWithFilterAsync(filterDto));
         }
 
+        [HttpGet("getuserbyid/{userId}")]
+        [Authorize(Roles = "Admin, Agent")]
+        public async Task<IActionResult> GetUserById(string userId)
+            => ProcessResult(await _userService.GetUserById(userId));
+
         [HttpPost("createuser")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateNewUser([FromBody] UserCreateDto userCreateDto)
             => ProcessResult(await _userService.CreateNewUserAsync(userCreateDto));
 
-        [HttpPost("updateuser/{userId}")]
+        [HttpPut("updateuser/{userId}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateUserInformation([FromBody] UserUpdateDto userUpdateDto, string userId)
             => ProcessResult(await _userService.UpdateUserInformationAsync(userUpdateDto, userId));

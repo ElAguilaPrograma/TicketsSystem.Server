@@ -11,6 +11,7 @@ namespace TicketsSystem.Core.Interfaces
         Task<Result<byte[]>> ExportUsersAsync(FilterUsersDto filterUsersDto);
         Task<Result<PagedResult<UserReadDto>>> GetAllUsersWithFilterAsync(GetAllUsersFilterDto fiilterDto);
         Task<Result<CurrentUserDto>> GetCurrentUser();
+        Task<Result<UserReadDto>> GetUserById(string userIdStr);
         Task<Result<UserCountDto>> GetUsersCount();
         Task<Result<LoginSuccessDto>> LoginAsync(LoginRequest request);
         Task<Result<IEnumerable<UserReadDto>>> SearchUserAsync(string query);

@@ -173,6 +173,7 @@ builder.Services.AddScoped<ITicketHubService, TicketHubService>();
 // Validations
 builder.Services.AddTransient<UserCreateValidator, UserCreateValidator>();
 builder.Services.AddTransient<UserUpdateValidator, UserUpdateValidator>();
+builder.Services.AddTransient<UserPasswordValidator, UserPasswordValidator>();
 builder.Services.AddTransient<LoginRequestValidation, LoginRequestValidation>();
 builder.Services.AddTransient<TicketsCreateValidator, TicketsCreateValidator>();
 builder.Services.AddTransient<TicketsUpdateValidator, TicketsUpdateValidator>();

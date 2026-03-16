@@ -1,20 +1,21 @@
-using Microsoft.AspNetCore.Identity;
-using TicketsSystem.Domain.Entities;
-using TicketsSystem.Domain.Interfaces;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
-using System.Text;
-using Microsoft.Extensions.Configuration;
+using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Office2016.Excel;
 using FluentResults;
-using TicketsSystem.Core.Errors;
-using TicketsSystem.Core.Validations.UserValidations;
-using TicketsSystem.Core.DTOs.UserDTO;
-using TicketsSystem.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using TicketsSystem.Core.DTOs.PaginationDTO;
-using ClosedXML.Excel;
+using TicketsSystem.Core.DTOs.UserDTO;
+using TicketsSystem.Core.Errors;
+using TicketsSystem.Core.Interfaces;
+using TicketsSystem.Core.Validations.UserValidations;
+using TicketsSystem.Domain.Entities;
+using TicketsSystem.Domain.Interfaces;
 
 namespace TicketsSystem.Core.Services
 {
@@ -24,6 +25,7 @@ namespace TicketsSystem.Core.Services
         private readonly IUserRepository _userRepository;
         private readonly UserCreateValidator _userCreateValidator;
         private readonly UserUpdateValidator _userUpdateValidator;
+        private readonly UserPasswordValidator _userPasswordValidator;
         private readonly LoginRequestValidation _loginRequestValidation;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IConfiguration _config;
@@ -33,6 +35,7 @@ namespace TicketsSystem.Core.Services
             IUserRepository userRepository,
             UserCreateValidator validationCreateRules,
             UserUpdateValidator updateUserUpdateRules,
+            UserPasswordValidator passwordValidator,
             IPasswordHasher<User> passwordHasher,
             LoginRequestValidation loginValidationsRules,
             IConfiguration configuration,
@@ -42,6 +45,7 @@ namespace TicketsSystem.Core.Services
             _userRepository = userRepository;
             _userCreateValidator = validationCreateRules;
             _userUpdateValidator = updateUserUpdateRules;
+            _userPasswordValidator = passwordValidator;
             _passwordHasher = passwordHasher;
             _loginRequestValidation = loginValidationsRules;
             _config = configuration;
@@ -96,6 +100,27 @@ namespace TicketsSystem.Core.Services
             return Result.Ok(result);
         }
 
+        public async Task<Result<UserReadDto>> GetUserById(string userIdStr)
+        {
+            Guid userId = Guid.Parse(userIdStr);
+            var user = await _userRepository.GetById(userId);
+
+            if (user == null)
+                return Result.Fail(new NotFoundError("The user does not exist"));
+
+            UserReadDto userReadDto = new UserReadDto
+            {
+                UserId = user.UserId,
+                FullName = user.FullName,
+                Email = user.Email,
+                Role = user.Role,
+                IsActive = user.IsActive,
+                CreatedAt = user.CreatedAt
+            };
+
+            return Result.Ok(userReadDto);
+        }
+
         public async Task<Result> CreateNewUserAsync(UserCreateDto userCreateDto)
         {
             if (userCreateDto == null)
@@ -115,7 +140,7 @@ namespace TicketsSystem.Core.Services
             {
                 FullName = userCreateDto.FullName,
                 Email = userCreateDto.Email,
-                PasswordHash = userCreateDto.Password,
+                PasswordHash = userCreateDto.ConfirmPassword,
                 Role = userCreateDto.Role,
                 IsActive = userCreateDto.IsActive
             };
@@ -181,11 +206,32 @@ namespace TicketsSystem.Core.Services
             if (user == null)
                 return Result.Fail(new NotFoundError("The user does not exist"));
 
+            if (!string.IsNullOrWhiteSpace(userUpdateDto.Password) && !string.IsNullOrWhiteSpace(userUpdateDto.ConfirmPassword))
+            {
+                var validationPasswordResult = await _userPasswordValidator.ValidateAsync(userUpdateDto);
+                if (!validationPasswordResult.IsValid)
+                {
+                    var errorMessages = validationPasswordResult.Errors.Select(e => new BadRequestError(e.ErrorMessage));
+                    return Result.Fail(errorMessages);
+                }
+                else
+                {
+                    var verification = _passwordHasher.VerifyHashedPassword(
+                        user,
+                        user.PasswordHash,
+                        userUpdateDto.Password
+                    );
+
+                    if (verification == PasswordVerificationResult.Success)
+                        return Result.Fail(new BadRequestError("The new password cannot be the same as the current password."));
+                    user.PasswordHash = _passwordHasher.HashPassword(user, userUpdateDto.Password);
+                }
+            }
+
             user.FullName = userUpdateDto.FullName;
             user.Email = userUpdateDto.Email;
             user.Role = userUpdateDto.Role;
             user.IsActive = userUpdateDto.IsActive;
-            user.PasswordHash = _passwordHasher.HashPassword(user, userUpdateDto.Password);
 
             _userRepository.Update(user);
             await _unitOfWork.SaveChangesAsync();

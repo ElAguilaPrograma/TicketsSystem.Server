@@ -12,6 +12,9 @@ namespace TicketsSystem.Core.Validations.UserValidations
             RuleFor(u => u.Email).NotEmpty().EmailAddress();
             RuleFor(u => u.Password).NotEmpty().MinimumLength(5)
                 .Matches("[A-Z]").WithMessage("Most contain a mayus");
+            RuleFor(u => u.ConfirmPassword).NotEmpty().MinimumLength(5)
+                .Matches("[A-Z]").WithMessage("Most contain a mayus")
+                .Equal(p => p.Password).WithMessage("The passwords do not match.");
             RuleFor(u => u.IsActive).NotEmpty();
             RuleFor(u => u.Role).NotEmpty()
                 .Must(role => Enum.TryParse<UserRole>(role, ignoreCase: true, out _))
