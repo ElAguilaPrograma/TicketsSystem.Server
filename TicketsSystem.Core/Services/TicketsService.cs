@@ -1,4 +1,5 @@
 using FluentResults;
+using System.Reflection.Metadata.Ecma335;
 using TicketsSystem.Core.DTOs.PaginationDTO;
 using TicketsSystem.Core.DTOs.TicketsDTO;
 using TicketsSystem.Core.Errors;
@@ -58,19 +59,6 @@ namespace TicketsSystem.Core.Services
 
         public async Task<Result<PagedResult<TicketsReadDto>>> GetAllTicketsWithFiltersAsync(GetAllTicketsFilterDto filterDto)
         {
-            var validStatusValues = Enum.GetNames<TicketsStatusValue>().Append("All").ToArray();
-            var validPriorityValues = Enum.GetNames<TicketsPriorityValue>().Append("All").ToArray();
-
-            if (!validStatusValues.Contains(filterDto.Status))
-                return Result.Fail(new BadRequestError($"Invalid status value. Valid status are: {string.Join(", ", validStatusValues)}"));
-            if (!validPriorityValues.Contains(filterDto.Priority))
-                return Result.Fail(new BadRequestError($"Invalid priority value. Valid priority are: {string.Join(", ", validPriorityValues)}"));
-            if (filterDto.Month != null)
-            {
-                if (filterDto.Month <= 0 || filterDto.Month > 12)
-                    return Result.Fail(new BadRequestError("Invalid month value"));
-            }
-
             var (tickets, totalCount) = await _ticketsRepository.GetAllTicketsPaginatedWithFilters(
                 filterDto.Page,
                 filterDto.PageSize,
@@ -212,8 +200,6 @@ namespace TicketsSystem.Core.Services
 
             if (ticket == null)
                 return Result.Fail(new NotFoundError("Ticket not found"));
-
-
 
             int originalStatusId = ticket.StatusId;
 
@@ -424,6 +410,23 @@ namespace TicketsSystem.Core.Services
             await _unitOfWork.SaveChangesAsync();
 
             return Result.Ok().WithSuccess(new OkSuccess("Ticket reopened successfully."));
+        }
+
+        public async Task<Result<GetCurrentUserTicketsCount>> GetCurrentUserTicketsCountAsync()
+        {
+            var tickets = await _ticketsRepository.GetCurrentUserTickets(
+                _currentUserService.GetCurrentUserId(),
+                _currentUserService.GetCurrentUserRole() ?? "");
+
+            var ticketsCount = new GetCurrentUserTicketsCount
+            {
+                TotalTickets = tickets.Count(),
+                TicketsOpen = tickets.Where(t => t.StatusId == 1).Count(),
+                TicketsReopen = tickets.Where(t => t.StatusId == 5).Count(),
+                TicketsClosed = tickets.Where(t => t.StatusId == 4).Count()
+            };
+
+            return ticketsCount;
         }
     }
 }

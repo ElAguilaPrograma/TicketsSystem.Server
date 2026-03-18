@@ -14,6 +14,7 @@ namespace TicketsSystem.Core.Interfaces
         Task<Result<IEnumerable<TicketsReadDto>>> GetAllTicketsAsync();
         Task<Result<PagedResult<TicketsReadDto>>> GetAllTicketsWithFiltersAsync(GetAllTicketsFilterDto filterDto);
         Task<Result<IEnumerable<TicketsReadDto>>> GetCurrentUserTicketsAsync();
+        Task<Result<GetCurrentUserTicketsCount>> GetCurrentUserTicketsCountAsync();
         Task<Result<IEnumerable<TicketsReadDto>>> GetTicketsByUserIdAsync(string userIdStr);
         Task<Result> ReopenTicketsAsync(string ticketIdStr);
         Task<Result<IEnumerable<TicketsReadDto>>> SearchTicketsAsync(string query, int? statusId, int? priorityId);

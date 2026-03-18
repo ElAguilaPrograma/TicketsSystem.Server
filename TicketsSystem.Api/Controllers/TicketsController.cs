@@ -67,5 +67,10 @@ namespace TicketsSystem.Api.Controllers
         [HttpPost("reopentickets/{ticketId}")]
         public async Task<IActionResult> ReopenTickets(string ticketId)
             => ProcessResult(await _ticketsService.ReopenTicketsAsync(ticketId));
+
+        [HttpGet("getcurrentuserticketscount")]
+        [Authorize]
+        public async Task<IActionResult> GetCurrentUserTicketsCount()
+            => ProcessResult(await _ticketsService.GetCurrentUserTicketsCountAsync());
     }
 }

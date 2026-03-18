@@ -178,13 +178,14 @@ builder.Services.AddScoped<IGetUserRole, GetUserRoleService>();
 builder.Services.AddScoped<ITicketCommetsService, TicketCommentsService>();
 builder.Services.AddScoped<ITicketHistoryService, TicketHistoryService>();
 builder.Services.AddScoped<ITicketHubService, TicketHubService>();
-// Validations (registered as IValidator<T> for the ValidationFilter)
+// Validations 
 builder.Services.AddTransient<IValidator<UserCreateDto>, UserCreateValidator>();
 builder.Services.AddTransient<IValidator<UserUpdateDto>, UserUpdateValidator>();
 builder.Services.AddTransient<UserPasswordValidator>();
 builder.Services.AddTransient<IValidator<LoginRequest>, LoginRequestValidation>();
 builder.Services.AddTransient<IValidator<TicketsCreateDto>, TicketsCreateValidator>();
 builder.Services.AddTransient<IValidator<TicketsUpdateDto>, TicketsUpdateValidator>();
+builder.Services.AddTransient<IValidator<GetAllTicketsFilterDto>, TicketsFilterValidation>();
 
 var app = builder.Build();
 

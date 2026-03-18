@@ -12,4 +12,14 @@ namespace TicketsSystem.Domain.Enums
         Closed = 4,
         Reopened = 5
     }
+
+    public enum TicketsStatusFilterValues
+    {
+        Open = 1,
+        InProgress = 2,
+        OnHold = 3,
+        Closed = 4,
+        Reopened = 5,
+        All = 6
+    }
 }
