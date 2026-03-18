@@ -1,8 +1,5 @@
 using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Office2016.Excel;
 using FluentResults;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -23,31 +20,22 @@ namespace TicketsSystem.Core.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
-        private readonly UserCreateValidator _userCreateValidator;
-        private readonly UserUpdateValidator _userUpdateValidator;
         private readonly UserPasswordValidator _userPasswordValidator;
-        private readonly LoginRequestValidation _loginRequestValidation;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IConfiguration _config;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
         public UserService(
             IUserRepository userRepository,
-            UserCreateValidator validationCreateRules,
-            UserUpdateValidator updateUserUpdateRules,
             UserPasswordValidator passwordValidator,
             IPasswordHasher<User> passwordHasher,
-            LoginRequestValidation loginValidationsRules,
             IConfiguration configuration,
             IUnitOfWork unitOfWork,
             ICurrentUserService currentUserService)
         {
             _userRepository = userRepository;
-            _userCreateValidator = validationCreateRules;
-            _userUpdateValidator = updateUserUpdateRules;
             _userPasswordValidator = passwordValidator;
             _passwordHasher = passwordHasher;
-            _loginRequestValidation = loginValidationsRules;
             _config = configuration;
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
@@ -123,15 +111,6 @@ namespace TicketsSystem.Core.Services
 
         public async Task<Result> CreateNewUserAsync(UserCreateDto userCreateDto)
         {
-            if (userCreateDto == null)
-                return Result.Fail(new BadRequestError("userDto is required"));
-
-            var validationResult = await _userCreateValidator.ValidateAsync(userCreateDto);
-            if (!validationResult.IsValid)
-            {
-                var errorMessages = validationResult.Errors.Select(e => new BadRequestError(e.ErrorMessage));
-                return Result.Fail(errorMessages);
-            }
 
             if (await _userRepository.EmailExist(userCreateDto.Email))
                 return Result.Fail(new BadRequestError("The user already exist"));
@@ -155,15 +134,6 @@ namespace TicketsSystem.Core.Services
 
         public async Task<Result<LoginSuccessDto>> LoginAsync(LoginRequest request)
         {
-            if (request == null)
-                return Result.Fail(new BadRequestError("Email or password are required"));
-
-            var validationResult = await _loginRequestValidation.ValidateAsync(request);
-            if (!validationResult.IsValid)
-            {
-                var errorMessage = validationResult.Errors.Select(e => new BadRequestError(e.ErrorMessage));
-                return Result.Fail(errorMessage);
-            }
 
             var user = await _userRepository.Login(request.Email);
 
@@ -191,16 +161,6 @@ namespace TicketsSystem.Core.Services
         public async Task<Result> UpdateUserInformationAsync(UserUpdateDto userUpdateDto, string userIdStr)
         {
             Guid userId = Guid.Parse(userIdStr);
-
-            if (userUpdateDto == null)
-                return Result.Fail(new BadRequestError("UserDTO is required"));
-
-            var validationResult = await _userUpdateValidator.ValidateAsync(userUpdateDto);
-            if (!validationResult.IsValid)
-            {
-                var errorMessages = validationResult.Errors.Select(e => new BadRequestError(e.ErrorMessage));
-                return Result.Fail(errorMessages);
-            }
 
             var user = await _userRepository.GetById(userId);
             if (user == null)

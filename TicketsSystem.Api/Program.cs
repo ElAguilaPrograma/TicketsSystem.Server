@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -5,6 +6,12 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
+using TicketsSystem.Api.Filters;
+using TicketsSystem.Api.Hubs;
+using TicketsSystem.Api.Services;
+using TicketsSystem.Core.DTOs.TicketsDTO;
+using TicketsSystem.Core.DTOs.UserDTO;
+using TicketsSystem.Core.Interfaces;
 using TicketsSystem.Core.Services;
 using TicketsSystem.Core.Validations.TicketsValidations;
 using TicketsSystem.Core.Validations.UserValidations;
@@ -12,15 +19,16 @@ using TicketsSystem.Data;
 using TicketsSystem.Data.Repositories;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Interfaces;
-using TicketsSystem.Core.Interfaces;
-using TicketsSystem.Api.Hubs;
-using TicketsSystem.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddScoped<ValidationFilter>();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ValidationFilter>();
+});
 // Swagger config using 8.1.4.
 builder.Services.AddSwaggerGen(c =>
 {
@@ -170,13 +178,13 @@ builder.Services.AddScoped<IGetUserRole, GetUserRoleService>();
 builder.Services.AddScoped<ITicketCommetsService, TicketCommentsService>();
 builder.Services.AddScoped<ITicketHistoryService, TicketHistoryService>();
 builder.Services.AddScoped<ITicketHubService, TicketHubService>();
-// Validations
-builder.Services.AddTransient<UserCreateValidator, UserCreateValidator>();
-builder.Services.AddTransient<UserUpdateValidator, UserUpdateValidator>();
-builder.Services.AddTransient<UserPasswordValidator, UserPasswordValidator>();
-builder.Services.AddTransient<LoginRequestValidation, LoginRequestValidation>();
-builder.Services.AddTransient<TicketsCreateValidator, TicketsCreateValidator>();
-builder.Services.AddTransient<TicketsUpdateValidator, TicketsUpdateValidator>();
+// Validations (registered as IValidator<T> for the ValidationFilter)
+builder.Services.AddTransient<IValidator<UserCreateDto>, UserCreateValidator>();
+builder.Services.AddTransient<IValidator<UserUpdateDto>, UserUpdateValidator>();
+builder.Services.AddTransient<UserPasswordValidator>();
+builder.Services.AddTransient<IValidator<LoginRequest>, LoginRequestValidation>();
+builder.Services.AddTransient<IValidator<TicketsCreateDto>, TicketsCreateValidator>();
+builder.Services.AddTransient<IValidator<TicketsUpdateDto>, TicketsUpdateValidator>();
 
 var app = builder.Build();
 

@@ -10,4 +10,5 @@ public interface ITicketsRepository : IGenericRepository<Ticket>
     Task<Ticket?> GetTicketById(Guid ticketId);
     Task<IEnumerable<Ticket?>> SearchTickets(string query, int? statusId, int? priorityId);
     Task<bool> TicketExist(Guid ticketId);
+    Task<(IEnumerable<Ticket> Tickets, int TotalCount)> GetAllTicketsPaginatedWithFilters(int page, int pageSize, string? status = null, string? priority = null, string? querySearch = null, int? month = null, int? year = null);
 }

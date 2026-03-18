@@ -1,4 +1,4 @@
-﻿using FluentResults;
+using FluentResults;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -21,8 +21,8 @@ namespace TicketsSystem.Api.Controllers
 
         [HttpGet("getalltickets")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAllTickets()
-            => ProcessResult(await _ticketsService.GetAllTicketsAsync());
+        public async Task<IActionResult> GetAllTickets([FromQuery] GetAllTicketsFilterDto filterDto)
+            => ProcessResult(await _ticketsService.GetAllTicketsWithFiltersAsync(filterDto));
 
         [HttpGet("getcurrentusertickets")]
         public async Task<IActionResult> GetCurrentUserTickets()

@@ -1,5 +1,6 @@
 using FluentResults;
 using Microsoft.AspNetCore.Mvc;
+using TicketsSystem.Core.DTOs.PaginationDTO;
 using TicketsSystem.Core.DTOs.TicketsDTO;
 
 namespace TicketsSystem.Core.Interfaces
@@ -11,6 +12,7 @@ namespace TicketsSystem.Core.Interfaces
         Task<Result> CloseTicketsAsync(string ticketIdStr);
         Task<Result> CreateATicketAsync(TicketsCreateDto ticketsCreateDto);
         Task<Result<IEnumerable<TicketsReadDto>>> GetAllTicketsAsync();
+        Task<Result<PagedResult<TicketsReadDto>>> GetAllTicketsWithFiltersAsync(GetAllTicketsFilterDto filterDto);
         Task<Result<IEnumerable<TicketsReadDto>>> GetCurrentUserTicketsAsync();
         Task<Result<IEnumerable<TicketsReadDto>>> GetTicketsByUserIdAsync(string userIdStr);
         Task<Result> ReopenTicketsAsync(string ticketIdStr);

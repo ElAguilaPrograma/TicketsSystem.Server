@@ -1,9 +1,10 @@
 using FluentResults;
+using TicketsSystem.Core.DTOs.PaginationDTO;
 using TicketsSystem.Core.DTOs.TicketsDTO;
 using TicketsSystem.Core.Errors;
 using TicketsSystem.Core.Interfaces;
-using TicketsSystem.Core.Validations.TicketsValidations;
 using TicketsSystem.Domain.Entities;
+using TicketsSystem.Domain.Enums;
 using TicketsSystem.Domain.Interfaces;
 
 namespace TicketsSystem.Core.Services
@@ -13,8 +14,6 @@ namespace TicketsSystem.Core.Services
         private readonly ITicketsRepository _ticketsRepository;
         private readonly ICurrentUserService _currentUserService;
         private readonly IGetUserRole _getUseRole;
-        private readonly TicketsCreateValidator _ticketsCreateValidator;
-        private readonly TicketsUpdateValidator _ticketsUpdateValidator;
         private readonly IUserRepository _userRepository;
         private readonly ITicketsHistoryRepository _ticketsHistoryRepository;
         private readonly IUnitOfWork _unitOfWork;
@@ -22,9 +21,7 @@ namespace TicketsSystem.Core.Services
 
         public TicketsService(ITicketsRepository ticketsRepository,
             ICurrentUserService currentUserService,
-            TicketsCreateValidator ticketsCreateValidator,
             IGetUserRole getUserRole,
-            TicketsUpdateValidator ticketsUpdateValidator,
             IUserRepository userRepository,
             ITicketsHistoryRepository ticketsHistoryRepository,
             IUnitOfWork unitOfWork,
@@ -33,8 +30,6 @@ namespace TicketsSystem.Core.Services
             _ticketsRepository = ticketsRepository;
             _currentUserService = currentUserService;
             _getUseRole = getUserRole;
-            _ticketsCreateValidator = ticketsCreateValidator;
-            _ticketsUpdateValidator = ticketsUpdateValidator;
             _userRepository = userRepository;
             _ticketsHistoryRepository = ticketsHistoryRepository;
             _unitOfWork = unitOfWork;
@@ -59,6 +54,55 @@ namespace TicketsSystem.Core.Services
             });
 
             return Result.Ok(ticketsDTOs).WithSuccess(new OkSuccess("Tickets retrieved successfully."));
+        }
+
+        public async Task<Result<PagedResult<TicketsReadDto>>> GetAllTicketsWithFiltersAsync(GetAllTicketsFilterDto filterDto)
+        {
+            var validStatusValues = Enum.GetNames<TicketsStatusValue>().Append("All").ToArray();
+            var validPriorityValues = Enum.GetNames<TicketsPriorityValue>().Append("All").ToArray();
+
+            if (!validStatusValues.Contains(filterDto.Status))
+                return Result.Fail(new BadRequestError($"Invalid status value. Valid status are: {string.Join(", ", validStatusValues)}"));
+            if (!validPriorityValues.Contains(filterDto.Priority))
+                return Result.Fail(new BadRequestError($"Invalid priority value. Valid priority are: {string.Join(", ", validPriorityValues)}"));
+            if (filterDto.Month != null)
+            {
+                if (filterDto.Month <= 0 || filterDto.Month > 12)
+                    return Result.Fail(new BadRequestError("Invalid month value"));
+            }
+
+            var (tickets, totalCount) = await _ticketsRepository.GetAllTicketsPaginatedWithFilters(
+                filterDto.Page,
+                filterDto.PageSize,
+                filterDto.Status,
+                filterDto.Priority,
+                filterDto.QuerySearch,
+                filterDto.Month,
+                filterDto.Year);
+
+            var ticketsDTOs = tickets.Select(t => new TicketsReadDto
+            {
+                TicketId = t.TicketId,
+                Title = t.Title,
+                Description = t.Description,
+                StatusName = t.Status.Name,
+                PriorityName = t.Priority.Name,
+                AssignedToUser = t.AssignedToUser?.FullName,
+                CreatedAt = t.CreatedAt,
+                UpdatedAt = t.UpdatedAt,
+                ClosedAt = t.ClosedAt
+            });
+
+            var result = new PagedResult<TicketsReadDto>
+            {
+                Data = ticketsDTOs,
+                TotalCount = totalCount,
+                Page = filterDto.Page,
+                PageSize = filterDto.PageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / filterDto.PageSize)
+            };
+
+            return Result.Ok(result);
         }
 
         public async Task<Result<IEnumerable<TicketsReadDto>>> GetCurrentUserTicketsAsync()
@@ -108,15 +152,6 @@ namespace TicketsSystem.Core.Services
 
         public async Task<Result> CreateATicketAsync(TicketsCreateDto ticketsCreateDto)
         {
-            if (ticketsCreateDto == null)
-                return Result.Fail(new BadRequestError("Request body is requiered"));
-
-            var validationResults = await _ticketsCreateValidator.ValidateAsync(ticketsCreateDto);
-            if (!validationResults.IsValid)
-            {
-                var errorMessages = validationResults.Errors.Select(e => new BadRequestError(e.ErrorMessage));
-                return Result.Fail(errorMessages);
-            }
 
             Guid userId = _currentUserService.GetCurrentUserId();
 
@@ -178,15 +213,7 @@ namespace TicketsSystem.Core.Services
             if (ticket == null)
                 return Result.Fail(new NotFoundError("Ticket not found"));
 
-            if (ticketsUpdateDto == null)
-                return Result.Fail(new BadRequestError("Request body is requiered"));
 
-            var validationResults = await _ticketsUpdateValidator.ValidateAsync(ticketsUpdateDto);
-            if (!validationResults.IsValid)
-            {
-                var errorMessages = validationResults.Errors.Select(e => new BadRequestError(e.ErrorMessage));
-                return Result.Fail(errorMessages);
-            }
 
             int originalStatusId = ticket.StatusId;
 
@@ -243,18 +270,8 @@ namespace TicketsSystem.Core.Services
 
         public async Task<Result> UpdateTicketPriority(TicketsUpdateDto ticketsUpdateDto, string ticketIdStr)
         {
-            if (ticketsUpdateDto == null)
-                return Result.Fail(new BadRequestError("Request body is required"));
-
             if (string.IsNullOrWhiteSpace(ticketIdStr))
                 return Result.Fail(new BadRequestError("Ticket id is required"));
-
-            var validationResults = await _ticketsUpdateValidator.ValidateAsync(ticketsUpdateDto);
-            if (!validationResults.IsValid)
-            {
-                var errorMessages = validationResults.Errors.Select(e => new BadRequestError(e.ErrorMessage));
-                return Result.Fail(errorMessages);
-            }
 
             Guid ticketId = Guid.Parse(ticketIdStr);
             var ticket = await _ticketsRepository.GetTicketById(ticketId);
