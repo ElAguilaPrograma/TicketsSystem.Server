@@ -147,6 +147,9 @@ namespace TicketsSystem.Core.Services
             if (ticket == null)
                 return Result.Fail(new NotFoundError("Ticket not found"));
 
+            if (_currentUserService.GetCurrentUserId() != ticket.AssignedToUserId && _currentUserService.GetCurrentUserRole() == "Agent")
+                return Result.Fail(new BadRequestError("Only the assigned agent can modify this ticket."));
+
             int originalStatusId = ticket.StatusId;
 
             ticket.Title = ticketsUpdateDto.Title;
@@ -189,7 +192,7 @@ namespace TicketsSystem.Core.Services
             return Result.Ok().WithSuccess(new OkSuccess("Ticket updated successfully."));
         }
 
-        public async Task<Result> UpdateTicketPriority(TicketsUpdateDto ticketsUpdateDto, string ticketIdStr)
+        public async Task<Result> UpdateTicketUser(TicketsUpdateDto ticketsUpdateDto, string ticketIdStr)
         {
             if (string.IsNullOrWhiteSpace(ticketIdStr))
                 return Result.Fail(new BadRequestError("Ticket id is required"));
@@ -200,9 +203,17 @@ namespace TicketsSystem.Core.Services
             if (ticket == null)
                 return Result.Fail(new NotFoundError("The ticket does not exist"));
 
+            if (ticket.CreatedByUserId != _currentUserService.GetCurrentUserId())
+                return Result.Fail(new BadRequestError("Only the user who created this ticket can modify it."));
+
             if (ticket.AssignedToUserId != null)
                 return Result.Fail(new BadRequestError("The ticket was already accepted by an Agent"));
 
+            if (ticketsUpdateDto.StatusId != ticket.StatusId || ticketsUpdateDto.AssignedToUserId != ticket.AssignedToUserId)
+                return Result.Fail(new ForbiddenError("You are not allowed to perform this action. Only Agents or Administrator can update Status or Assigned To"));
+                
+            ticket.Title = ticketsUpdateDto.Title;
+            ticket.Description = ticketsUpdateDto.Description;
             ticket.PriorityId = ticketsUpdateDto.PriorityId;
             ticket.UpdatedAt = DateTime.UtcNow;
 
@@ -284,7 +295,7 @@ namespace TicketsSystem.Core.Services
                 return Result.Fail(new NotFoundError("The ticket is does not exist"));
 
             if (ticket.StatusId != (int)TicketsStatusValue.Closed)
-                return Result.Fail(new BadRequestError("The ticket is already open"));
+                return Result.Fail(new BadRequestError("The ticket is already open, please refresh the page."));
 
             ticket.StatusId = (int)TicketsStatusValue.Reopened;
             ticket.UpdatedAt = DateTime.UtcNow;

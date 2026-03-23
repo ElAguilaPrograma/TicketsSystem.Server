@@ -30,6 +30,7 @@ namespace TicketsSystem.Api.Controllers
             => ProcessResult(await _ticketsService.GetTicketByIdAsync(ticketId));
 
         [HttpGet("getcurrentusertickets")]
+        [Authorize]
         public async Task<IActionResult> GetCurrentUserTickets()
             => ProcessResult(await _ticketsService.GetCurrentUserTicketsAsync());
 
@@ -39,6 +40,7 @@ namespace TicketsSystem.Api.Controllers
             => ProcessResult(await _ticketsService.GetTicketsByUserIdAsync(userId));
 
         [HttpPost("createticket")]
+        [Authorize]
         public async Task<IActionResult> CreateTicket([FromBody] TicketsCreateDto ticketsCreateDto)
             => ProcessResult(await _ticketsService.CreateATicketAsync(ticketsCreateDto));
 
@@ -47,9 +49,10 @@ namespace TicketsSystem.Api.Controllers
         public async Task<IActionResult> UpdateTicket([FromBody] TicketsUpdateDto tickets, string ticketId)
             => ProcessResult(await _ticketsService.UpdateATicketInfoAsync(tickets, ticketId));
 
-        [HttpPost("updateticketpriority")]
+        [HttpPut("updateticketuser/{ticketId}")]
+        [Authorize]
         public async Task<IActionResult> UpdateTicketPriorityLevel([FromBody] TicketsUpdateDto ticketsUpdateDto, string ticketId)
-            => ProcessResult(await _ticketsService.UpdateTicketPriority(ticketsUpdateDto, ticketId));
+            => ProcessResult(await _ticketsService.UpdateTicketUser(ticketsUpdateDto, ticketId));
 
         [HttpPost("assingtickets/{ticketId}/{userId}")]
         [Authorize(Roles = "Admin")]
@@ -61,12 +64,13 @@ namespace TicketsSystem.Api.Controllers
         public async Task<IActionResult> AcceptTicket(string ticketId)
             => ProcessResult(await _ticketsService.AcceptTickets(ticketId));
 
-
         [HttpPost("closetickets/{ticketId}")]
+        [Authorize(Roles = "Admin, Agent")]
         public async Task<IActionResult> CloseTickets(string ticketId)
             => ProcessResult(await _ticketsService.CloseTicketsAsync(ticketId));
 
         [HttpPost("reopentickets/{ticketId}")]
+        [Authorize(Roles = "Admin, Agent")]
         public async Task<IActionResult> ReopenTickets(string ticketId)
             => ProcessResult(await _ticketsService.ReopenTicketsAsync(ticketId));
 

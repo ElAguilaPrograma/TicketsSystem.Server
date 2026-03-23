@@ -18,6 +18,6 @@ namespace TicketsSystem.Core.Interfaces
         Task<Result<IEnumerable<TicketsReadDto>>> GetTicketsByUserIdAsync(string userIdStr);
         Task<Result> ReopenTicketsAsync(string ticketIdStr);
         Task<Result> UpdateATicketInfoAsync(TicketsUpdateDto ticketsUpdateDto, string ticketIdStr);
-        Task<Result> UpdateTicketPriority([FromBody] TicketsUpdateDto ticketsUpdateDto, string ticketIdStr);
+        Task<Result> UpdateTicketUser([FromBody] TicketsUpdateDto ticketsUpdateDto, string ticketIdStr);
     }
 }
