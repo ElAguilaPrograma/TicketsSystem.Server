@@ -13,16 +13,6 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
         _tickets = _dbSet;
     }
 
-    public async Task<IEnumerable<Ticket>> GetAllTickets()
-    {
-        var tickets = await _tickets
-            .Include(t => t.Status)
-            .Include(t => t.Priority)
-            .Include(t => t.AssignedToUser)
-            .ToListAsync();
-        return tickets;
-    }
-
     public async Task<(IEnumerable<Ticket> Tickets, int TotalCount)> GetAllTicketsPaginatedWithFilters(
         int page, 
         int pageSize, 
@@ -30,14 +20,18 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
         string? priority = null, 
         string? querySearch = null,
         int? month = null,
-        int? year = null)
+        int? year = null,
+        Guid? userId = null)
     {
         var query = _tickets
             .Include(t => t.Status)
             .Include(t => t.Priority)
             .Include(t => t.AssignedToUser)
+            .Include(t => t.CreatedByUser)
             .AsQueryable();
 
+        if (userId != null)
+            query = query.Where(t => t.CreatedByUserId == userId);
         if (!string.IsNullOrWhiteSpace(status) && status != "All")
             query = query.Where(t => t.Status.Name == status);
         if (!string.IsNullOrWhiteSpace(priority) && priority != "All")
@@ -54,6 +48,7 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
 
         var totalCount = await query.CountAsync();
         var tickets = await query
+            .OrderByDescending(t => t.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -89,25 +84,25 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
             .Include(t => t.Status)
             .Include(t => t.Priority)
             .Include(t => t.AssignedToUser)
+            .Include(t => t.CreatedByUser)
             .FirstOrDefaultAsync(t => t.TicketId == ticketId);
-    }
-
-    public async Task<IEnumerable<Ticket?>> SearchTickets(string query, int? statusId, int? priorityId)
-    {
-        var queryable = _tickets.Where(t => t.Title.ToLower().Contains(query));
-
-        if (statusId.HasValue)
-            queryable = queryable.Where(t => t.StatusId == statusId.Value);
-
-        if (priorityId.HasValue)
-            queryable = queryable.Where(t => t.PriorityId == priorityId.Value);
-
-        return await queryable
-            .Include(t => t.Status)
-            .Include(t => t.Priority)
-            .ToListAsync();
     }
 
     public Task<bool> TicketExist(Guid ticketId)
         => _tickets.AnyAsync(t  => t.TicketId == ticketId);
+
+    public async Task<Dictionary<int, int>> GetTicketsCountSummary(Guid userId, string userRole)
+    {
+        var query = _tickets.AsQueryable();
+
+        if (userRole == "Agent")
+            query = query.Where(t => t.CreatedByUserId == userId || t.AssignedToUserId == userId);
+        else
+            query = query.Where(t => t.CreatedByUserId == userId);
+
+        return await query
+            .GroupBy(t => t.StatusId)
+            .Select(g => new { StatusId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.StatusId, x => x.Count);
+    }
 }

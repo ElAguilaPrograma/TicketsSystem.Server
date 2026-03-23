@@ -55,10 +55,6 @@ namespace TicketsSystem.Api.Controllers
         public async Task<IActionResult> UpdateUserInformation([FromBody] UserUpdateDto userUpdateDto, string userId)
             => ProcessResult(await _userService.UpdateUserInformationAsync(userUpdateDto, userId));
 
-        [HttpGet("searchuser/{query}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> SearchUser(string query)
-            => ProcessResult(await _userService.SearchUserAsync(query));
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)

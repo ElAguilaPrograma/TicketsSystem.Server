@@ -37,28 +37,18 @@ namespace TicketsSystem.Core.Services
             _ticketHubService = ticketHubService;
         }
 
-        public async Task<Result<IEnumerable<TicketsReadDto>>> GetAllTicketsAsync()
-        {
-            var tickets = await _ticketsRepository.GetAllTickets();
-
-            IEnumerable<TicketsReadDto> ticketsDTOs = tickets.Select(t => new TicketsReadDto
-            {
-                TicketId = t.TicketId,
-                Title = t.Title,
-                Description = t.Description,
-                StatusName = t.Status.Name,
-                PriorityName = t.Priority.Name,
-                AssignedToUser = t.AssignedToUser?.FullName ?? "To be defined",
-                CreatedAt = t.CreatedAt,
-                UpdatedAt = t.UpdatedAt,
-                ClosedAt = t.ClosedAt
-            });
-
-            return Result.Ok(ticketsDTOs).WithSuccess(new OkSuccess("Tickets retrieved successfully."));
-        }
-
         public async Task<Result<PagedResult<TicketsReadDto>>> GetAllTicketsWithFiltersAsync(GetAllTicketsFilterDto filterDto)
         {
+            Guid? filterByUserId = null;
+
+            if (!filterDto.CurrentUserOnly && _currentUserService.GetCurrentUserRole() != "Admin")
+                return Result.Fail(new ForbiddenError("You are not authorized to perform this action."));
+
+            if (filterDto.CurrentUserOnly)
+                filterByUserId = _currentUserService.GetCurrentUserId();
+            else if (!string.IsNullOrEmpty(filterDto.UserId))
+                filterByUserId = Guid.Parse(filterDto.UserId);
+
             var (tickets, totalCount) = await _ticketsRepository.GetAllTicketsPaginatedWithFilters(
                 filterDto.Page,
                 filterDto.PageSize,
@@ -66,24 +56,12 @@ namespace TicketsSystem.Core.Services
                 filterDto.Priority,
                 filterDto.QuerySearch,
                 filterDto.Month,
-                filterDto.Year);
-
-            var ticketsDTOs = tickets.Select(t => new TicketsReadDto
-            {
-                TicketId = t.TicketId,
-                Title = t.Title,
-                Description = t.Description,
-                StatusName = t.Status.Name,
-                PriorityName = t.Priority.Name,
-                AssignedToUser = t.AssignedToUser?.FullName,
-                CreatedAt = t.CreatedAt,
-                UpdatedAt = t.UpdatedAt,
-                ClosedAt = t.ClosedAt
-            });
+                filterDto.Year,
+                filterByUserId);
 
             var result = new PagedResult<TicketsReadDto>
             {
-                Data = ticketsDTOs,
+                Data = tickets.Select(MapToDto),
                 TotalCount = totalCount,
                 Page = filterDto.Page,
                 PageSize = filterDto.PageSize,
@@ -100,18 +78,7 @@ namespace TicketsSystem.Core.Services
 
             var tickets = await _ticketsRepository.GetCurrentUserTickets(currentUserId, currentUserRole);
 
-            IEnumerable<TicketsReadDto> ticketsDTOs = tickets.Select(t => new TicketsReadDto
-            {
-                TicketId = t.TicketId,
-                Title = t.Title,
-                Description = t.Description,
-                StatusName = t.Status.Name,
-                PriorityName = t.Priority.Name,
-                AssignedToUser = t.AssignedToUser?.FullName ?? "To be defined",
-                CreatedAt = t.CreatedAt,
-                UpdatedAt = t.UpdatedAt,
-                ClosedAt = t.ClosedAt
-            });
+            IEnumerable<TicketsReadDto> ticketsDTOs = tickets.Select(MapToDto);
 
             return Result.Ok(ticketsDTOs).WithSuccess(new OkSuccess("User tickets retrieved successfully."));
         }
@@ -122,18 +89,7 @@ namespace TicketsSystem.Core.Services
 
             var tickets = await _ticketsRepository.GetTicketsByUserId(userId);
 
-            IEnumerable<TicketsReadDto> ticketsDTOs = tickets.Select(t => new TicketsReadDto
-            {
-                TicketId = t.TicketId,
-                Title = t.Title,
-                Description = t.Description,
-                StatusName = t.Status.Name,
-                PriorityName = t.Priority.Name,
-                AssignedToUser = t.AssignedToUser?.FullName ?? "To be defined",
-                CreatedAt = t.CreatedAt,
-                UpdatedAt = t.UpdatedAt,
-                ClosedAt = t.ClosedAt
-            });
+            IEnumerable<TicketsReadDto> ticketsDTOs = tickets.Select(MapToDto);
 
             return Result.Ok(ticketsDTOs).WithSuccess(new OkSuccess("User tickets retrieved successfully."));
         }
@@ -147,9 +103,10 @@ namespace TicketsSystem.Core.Services
             {
                 Title = ticketsCreateDto.Title,
                 Description = ticketsCreateDto.Description,
-                StatusId = 1,
+                StatusId = (int)TicketsStatusValue.Open,
                 PriorityId = ticketsCreateDto.PriorityId,
-                CreatedByUserId = userId
+                CreatedByUserId = userId,
+                CreatedAt = DateTime.UtcNow
             };
 
             await _ticketsRepository.Create(newTicket);
@@ -170,18 +127,7 @@ namespace TicketsSystem.Core.Services
             var ticketWithData = await _ticketsRepository.GetTicketById(newTicket.TicketId);
             if (ticketWithData != null)
             {
-                var ticketReadDto = new TicketsReadDto
-                {
-                    TicketId = ticketWithData.TicketId,
-                    Title = ticketWithData.Title,
-                    Description = ticketWithData.Description,
-                    StatusName = ticketWithData.Status?.Name,
-                    PriorityName = ticketWithData.Priority?.Name,
-                    AssignedToUser = ticketWithData.AssignedToUser?.FullName ?? "To be defined",
-                    CreatedAt = ticketWithData.CreatedAt,
-                    UpdatedAt = ticketWithData.UpdatedAt,
-                    ClosedAt = ticketWithData.ClosedAt
-                };
+                var ticketReadDto = MapToDto(ticketWithData);
                 await _ticketHubService.NotifyTicketCreated(ticketReadDto);
             }
 
@@ -207,7 +153,7 @@ namespace TicketsSystem.Core.Services
             ticket.Description = ticketsUpdateDto.Description;
             ticket.StatusId = ticketsUpdateDto.StatusId;
             ticket.PriorityId = ticketsUpdateDto.PriorityId;
-            ticket.UpdatedAt = ticketsUpdateDto.UpdatedAt;
+            ticket.UpdatedAt = DateTime.UtcNow;
 
             if (ticketsUpdateDto.AssignedToUserId != null)
             {
@@ -234,18 +180,7 @@ namespace TicketsSystem.Core.Services
                 var updatedTicket = await _ticketsRepository.GetTicketById(ticketId);
                 if (updatedTicket != null)
                 {
-                    var newTicketReadDto = new TicketsReadDto
-                    {
-                        TicketId = updatedTicket.TicketId,
-                        Title = updatedTicket.Title,
-                        Description = updatedTicket.Description,
-                        StatusName = updatedTicket.Status?.Name,
-                        PriorityName = updatedTicket.Priority?.Name,
-                        AssignedToUser = updatedTicket.AssignedToUser?.FullName ?? "To be defined",
-                        CreatedAt = updatedTicket.CreatedAt,
-                        UpdatedAt = updatedTicket.UpdatedAt,
-                        ClosedAt = updatedTicket.ClosedAt
-                    };
+                    var newTicketReadDto = MapToDto(updatedTicket);
 
                     await _ticketHubService.NotifyTicketStatusChanged(newTicketReadDto, updatedTicket.CreatedByUserId);
                 }
@@ -269,6 +204,7 @@ namespace TicketsSystem.Core.Services
                 return Result.Fail(new BadRequestError("The ticket was already accepted by an Agent"));
 
             ticket.PriorityId = ticketsUpdateDto.PriorityId;
+            ticket.UpdatedAt = DateTime.UtcNow;
 
             _ticketsRepository.Update(ticket);
             await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
@@ -308,58 +244,7 @@ namespace TicketsSystem.Core.Services
 
         public async Task<Result> AcceptTickets(string ticketIdStr)
         {
-            if (string.IsNullOrWhiteSpace(ticketIdStr) || ticketIdStr == null)
-                return Result.Fail(new BadRequestError("The ticket id is not valid"));
-
-            Guid userId = _currentUserService.GetCurrentUserId();
-            Guid ticketId = Guid.Parse(ticketIdStr);
-
-            if (await _getUseRole.UserIsAgent(userId) == false)
-                return Result.Fail(new ForbiddenError("The user is not Agent"));
-
-            var ticket = await _ticketsRepository.GetTicketById(ticketId);
-
-            if (ticket == null)
-                return Result.Fail(new NotFoundError("The ticket does not exist"));
-
-            ticket.AssignedToUserId = userId;
-            ticket.UpdatedAt = DateTime.UtcNow;
-
-            _ticketsRepository.Update(ticket);
-            await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
-            await _unitOfWork.SaveChangesAsync();
-
-            return Result.Ok().WithSuccess(new AcceptedSuccess("Ticket accepted successfully."));
-        }
-
-        public async Task<Result<IEnumerable<TicketsReadDto>>> SearchTicketsAsync(
-            string query,
-            int? statusValue = null,
-            int? priorityValue = null)
-        {
-            if (string.IsNullOrWhiteSpace(query) || query == null)
-                return Result.Fail(new BadRequestError("Query format is not valid"));
-
-            query = query.ToLower();
-            var tickets = await _ticketsRepository.SearchTickets(query, statusValue, priorityValue);
-
-            if (tickets == null)
-                return Result.Fail(new NotFoundError("No tickets were found"));
-
-            IEnumerable<TicketsReadDto> ticketsReadDtos = tickets.Select(t => new TicketsReadDto
-            {
-                TicketId = t.TicketId,
-                Title = t.Title,
-                Description = t.Description,
-                StatusName = t.Status?.Name,
-                PriorityName = t.Priority?.Name,
-                AssignedToUser = t.AssignedToUser?.FullName ?? "To be defined",
-                CreatedAt = t.CreatedAt,
-                UpdatedAt = t.UpdatedAt,
-                ClosedAt = t.ClosedAt
-            });
-
-            return Result.Ok(ticketsReadDtos);
+            return await AssingTicketAsync(_currentUserService.GetCurrentUserId().ToString(), ticketIdStr);
         }
 
         public async Task<Result> CloseTicketsAsync(string ticketIdStr)
@@ -373,10 +258,10 @@ namespace TicketsSystem.Core.Services
             if (ticket == null)
                 return Result.Fail(new NotFoundError("The ticket is does not exist"));
 
-            if (ticket.StatusId == 4)
+            if (ticket.StatusId == (int)TicketsStatusValue.Closed)
                 return Result.Fail(new BadRequestError("The ticket is already close"));
 
-            ticket.StatusId = 4;
+            ticket.StatusId = (int)TicketsStatusValue.Closed;
             ticket.UpdatedAt = DateTime.UtcNow;
             ticket.ClosedAt = DateTime.UtcNow;
 
@@ -398,10 +283,10 @@ namespace TicketsSystem.Core.Services
             if (ticket == null)
                 return Result.Fail(new NotFoundError("The ticket is does not exist"));
 
-            if (ticket.StatusId != 4)
+            if (ticket.StatusId != (int)TicketsStatusValue.Closed)
                 return Result.Fail(new BadRequestError("The ticket is already open"));
 
-            ticket.StatusId = 5;
+            ticket.StatusId = (int)TicketsStatusValue.Reopened;
             ticket.UpdatedAt = DateTime.UtcNow;
             ticket.ClosedAt = null;
 
@@ -412,21 +297,71 @@ namespace TicketsSystem.Core.Services
             return Result.Ok().WithSuccess(new OkSuccess("Ticket reopened successfully."));
         }
 
+        public async Task<Result> AbandonATicketAsync(string ticketIdStr)
+        {
+            if (string.IsNullOrWhiteSpace(ticketIdStr))
+                return Result.Fail(new BadRequestError("The ticket id is not valid"));
+
+            Guid ticketId = Guid.Parse(ticketIdStr);
+
+            var ticket = await _ticketsRepository.GetTicketById(ticketId);
+            if (ticket == null)
+                return Result.Fail(new NotFoundError("The ticket is does not exist"));
+
+            ticket.AssignedToUserId = null;
+            _ticketsRepository.Update(ticket);
+            await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
+            await _unitOfWork.SaveChangesAsync();
+
+            return Result.Ok().WithSuccess(new OkSuccess("Ticket was abandoned"));
+        }
+
         public async Task<Result<GetCurrentUserTicketsCount>> GetCurrentUserTicketsCountAsync()
         {
-            var tickets = await _ticketsRepository.GetCurrentUserTickets(
-                _currentUserService.GetCurrentUserId(),
-                _currentUserService.GetCurrentUserRole() ?? "");
+            var userId = _currentUserService.GetCurrentUserId();
+            var role = _currentUserService.GetCurrentUserRole() ?? "";
 
-            var ticketsCount = new GetCurrentUserTicketsCount
+            var counts = await _ticketsRepository.GetTicketsCountSummary(userId, role);
+
+            return new GetCurrentUserTicketsCount
             {
-                TotalTickets = tickets.Count(),
-                TicketsOpen = tickets.Where(t => t.StatusId == 1).Count(),
-                TicketsReopen = tickets.Where(t => t.StatusId == 5).Count(),
-                TicketsClosed = tickets.Where(t => t.StatusId == 4).Count()
+                TotalTickets = counts.Values.Sum(),
+                TicketsOpen = counts.GetValueOrDefault((int)TicketsStatusValue.Open),
+                TicketsClosed = counts.GetValueOrDefault((int)TicketsStatusValue.Closed),
+                TicketsReopen = counts.GetValueOrDefault((int)TicketsStatusValue.Reopened)
             };
-
-            return ticketsCount;
         }
+
+        public async Task<Result<TicketsReadDto>> GetTicketByIdAsync(string ticketIdStr)
+        {
+            Guid ticketId = Guid.Parse(ticketIdStr);
+
+            var ticket = await _ticketsRepository.GetTicketById(ticketId);
+
+            if (ticket == null)
+                return Result.Fail(new NotFoundError("The ticket does not exist"));
+
+            var ticketDto = MapToDto(ticket);
+
+            return Result.Ok(ticketDto).WithSuccess("Ticket loaded correctly");
+        }
+
+        private static TicketsReadDto MapToDto(Ticket t) => new()
+        {
+            TicketId = t.TicketId,
+            Title = t.Title,
+            Description = t.Description,
+            StatusId = t.StatusId,
+            StatusName = t.Status.Name,
+            PriorityId = t.PriorityId,
+            PriorityName = t.Priority.Name,
+            AssignedToUserId = t.AssignedToUserId,
+            AssignedToUser = t.AssignedToUser?.FullName,
+            CreatedByUser = t.CreatedByUser.FullName,
+            CreatedByUserId = t.CreatedByUserId,
+            CreatedAt = t.CreatedAt,
+            UpdatedAt = t.UpdatedAt,
+            ClosedAt = t.ClosedAt
+        };
     }
 }

@@ -223,28 +223,6 @@ namespace TicketsSystem.Core.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<Result<IEnumerable<UserReadDto>>> SearchUserAsync(string query)
-        {
-            if (string.IsNullOrWhiteSpace(query))
-                return Result.Fail(new BadRequestError("Query format is not valid"));
-
-            query = query.ToLower();
-
-            var user = await _userRepository.SearchUsers(query);
-
-            IEnumerable<UserReadDto> userDTO = user.Select(u => new UserReadDto
-            {
-                UserId = u.UserId,
-                FullName = u.FullName,
-                Email = u.Email,
-                Role = u.Role,
-                IsActive = u.IsActive,
-                CreatedAt = u.CreatedAt
-            });
-            
-            return Result.Ok(userDTO).WithSuccess(new OkSuccess("Users retrieved successfully."));
-        }
-
         public async Task<Result> DeactivateOrActivateAUserAsync(string userIdStr)
         {
             if (string.IsNullOrWhiteSpace(userIdStr))
@@ -274,7 +252,7 @@ namespace TicketsSystem.Core.Services
             var email = _currentUserService.GetCurrentUserEmail();
             var role = _currentUserService.GetCurrentUserRole();
             var user = await _userRepository.GetById(userId);
-            var fullName = user.FullName;
+            var fullName = user!.FullName;
 
             var currentUserClaimData = new CurrentUserDto()
             {

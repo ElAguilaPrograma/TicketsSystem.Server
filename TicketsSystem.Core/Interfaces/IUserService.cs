@@ -14,7 +14,6 @@ namespace TicketsSystem.Core.Interfaces
         Task<Result<UserReadDto>> GetUserById(string userIdStr);
         Task<Result<UserCountDto>> GetUsersCount();
         Task<Result<LoginSuccessDto>> LoginAsync(LoginRequest request);
-        Task<Result<IEnumerable<UserReadDto>>> SearchUserAsync(string query);
         Task<Result> UpdateUserInformationAsync(UserUpdateDto userUpdateDto, string userIdStr);
     }
 }

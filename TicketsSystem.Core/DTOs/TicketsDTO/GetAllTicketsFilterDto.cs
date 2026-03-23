@@ -8,6 +8,8 @@ namespace TicketsSystem.Core.DTOs.TicketsDTO
     {
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 5;
+        public string? UserId { get; set; } = null;
+        public bool CurrentUserOnly { get; set; }
         public string? Status { get; set; } = "All";
         public string? Priority { get; set; } = "All";
         public int? Month { get; set; } = null;

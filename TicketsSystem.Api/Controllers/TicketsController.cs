@@ -19,10 +19,15 @@ namespace TicketsSystem.Api.Controllers
             _ticketsService = ticketsService;
         }
 
-        [HttpGet("getalltickets")]
-        [Authorize(Roles = "Admin")]
+        [HttpGet("gettickets")]
+        [Authorize]
         public async Task<IActionResult> GetAllTickets([FromQuery] GetAllTicketsFilterDto filterDto)
             => ProcessResult(await _ticketsService.GetAllTicketsWithFiltersAsync(filterDto));
+
+        [HttpGet("getticketbyid/{ticketId}")]
+        [Authorize]
+        public async Task<IActionResult> GetTicketById(string ticketId)
+            => ProcessResult(await _ticketsService.GetTicketByIdAsync(ticketId));
 
         [HttpGet("getcurrentusertickets")]
         public async Task<IActionResult> GetCurrentUserTickets()
@@ -37,7 +42,7 @@ namespace TicketsSystem.Api.Controllers
         public async Task<IActionResult> CreateTicket([FromBody] TicketsCreateDto ticketsCreateDto)
             => ProcessResult(await _ticketsService.CreateATicketAsync(ticketsCreateDto));
 
-        [HttpPost("updateticketinfo/{ticketId}")]
+        [HttpPut("updateticketinfo/{ticketId}")]
         [Authorize(Roles = "Admin, Agent")]
         public async Task<IActionResult> UpdateTicket([FromBody] TicketsUpdateDto tickets, string ticketId)
             => ProcessResult(await _ticketsService.UpdateATicketInfoAsync(tickets, ticketId));
@@ -56,9 +61,6 @@ namespace TicketsSystem.Api.Controllers
         public async Task<IActionResult> AcceptTicket(string ticketId)
             => ProcessResult(await _ticketsService.AcceptTickets(ticketId));
 
-        [HttpPost("searchtickets/{query}")]
-        public async Task<IActionResult> SearchTickets(string query, int? statusId, int? priorityId)
-            => ProcessResult(await _ticketsService.SearchTicketsAsync(query, statusId, priorityId));
 
         [HttpPost("closetickets/{ticketId}")]
         public async Task<IActionResult> CloseTickets(string ticketId)
