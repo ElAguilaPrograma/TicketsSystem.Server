@@ -419,3 +419,6 @@ FodyWeavers.xsd
 
 # Startup
 start-projects.bat
+
+# Credentials
+TestCredentials.md

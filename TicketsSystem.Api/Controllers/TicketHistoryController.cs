@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TicketsSystem.Core.Interfaces;
 
@@ -15,6 +16,7 @@ namespace TicketsSystem.Api.Controllers
         }
 
         [HttpGet("gettickethistory/{ticketId}")]
+        [Authorize]
         public async Task<IActionResult> GetTicketHistory(string ticketId)
             => ProcessResult(await _ticketHistoryService.GetTicketHistoryAsync(ticketId));
     }

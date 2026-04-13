@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Interfaces;
 
@@ -19,7 +19,7 @@ namespace TicketsSystem.Data.Repositories
             var entry = _context.Entry(ticket);
             foreach (var property in entry.Properties)
             {
-                if (property.IsModified)
+                if (property.IsModified && !Equals(property.OriginalValue, property.CurrentValue))
                 {
                     string fieldName = property.Metadata.PropertyInfo?.Name ?? property.Metadata.Name;
                     var newTicketHistory = new TicketHistory
@@ -37,6 +37,6 @@ namespace TicketsSystem.Data.Repositories
         }
 
         public async Task<IEnumerable<TicketHistory>> GetTicketHistories(Guid ticketId)
-            => await _ticketHistory.Where(t => t.TicketId == ticketId).ToListAsync();
+            => await _ticketHistory.Include(t => t.ChangedByUser).Where(t => t.TicketId == ticketId).ToListAsync();
     }
 }

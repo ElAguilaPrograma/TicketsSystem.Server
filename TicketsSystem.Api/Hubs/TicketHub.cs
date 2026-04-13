@@ -13,6 +13,9 @@ namespace TicketsSystem.Api.Hubs
             if (role == "Admin" || role == "Agent")
                 await Groups.AddToGroupAsync(Context.ConnectionId, "ManagementGroup");
 
+            if (role == "Agent")
+                await Groups.AddToGroupAsync(Context.ConnectionId, "AgentsGroup");
+
             if (role == "User")
                 await Groups.AddToGroupAsync(Context.ConnectionId, "UsersGroup");
 

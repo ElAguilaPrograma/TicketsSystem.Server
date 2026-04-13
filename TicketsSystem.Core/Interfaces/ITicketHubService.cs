@@ -6,7 +6,7 @@ namespace TicketsSystem.Core.Interfaces
 {
     public interface ITicketHubService
     {
-        Task NotifyTicketCommentCreated(TicketsReadComment comment, Guid ticketCreatorUserId);
+        Task NotifyTicketCommentCreated(TicketsReadComment comment, Guid ticketCreatorUserId, Guid? assignedAgentUserId);
         Task NotifyTicketCreated(TicketsReadDto ticket);
         Task NotifyTicketStatusChanged(TicketsReadDto ticket, Guid userId);
     }

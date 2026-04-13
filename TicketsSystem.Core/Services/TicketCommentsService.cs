@@ -79,7 +79,7 @@ namespace TicketsSystem.Core.Services
                     CreatedByUser = await _currentUserService.GetCurrentUserName(),
                     CreatedAt = ticketComment.CreatedAt
                 };
-                await _ticketHubService.NotifyTicketCommentCreated(readComment, ticket.CreatedByUserId);
+                await _ticketHubService.NotifyTicketCommentCreated(readComment, ticket.CreatedByUserId, ticket.AssignedToUserId);
             }
 
             return Result.Ok().WithSuccess(new CreatedSuccess("Comment created successfully."));

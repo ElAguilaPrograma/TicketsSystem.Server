@@ -12,12 +12,16 @@ namespace TicketsSystem.Core.Interfaces
         Task<Result> CloseTicketsAsync(string ticketIdStr);
         Task<Result> CreateATicketAsync(TicketsCreateDto ticketsCreateDto);
         Task<Result<PagedResult<TicketsReadDto>>> GetAllTicketsWithFiltersAsync(GetAllTicketsFilterDto filterDto);
+        Task<Result<PagedResult<TicketsReadDto>>> GetMyAssignedTicketsAsync(GetAllTicketsFilterDto filterDto);
         Task<Result<IEnumerable<TicketsReadDto>>> GetCurrentUserTicketsAsync();
         Task<Result<GetCurrentUserTicketsCount>> GetCurrentUserTicketsCountAsync();
+        Task<Result<int>> GetTodaysTicketsCountAsync();
         Task<Result<TicketsReadDto>> GetTicketByIdAsync(string ticketIdStr);
         Task<Result<IEnumerable<TicketsReadDto>>> GetTicketsByUserIdAsync(string userIdStr);
         Task<Result> ReopenTicketsAsync(string ticketIdStr);
         Task<Result> UpdateATicketInfoAsync(TicketsUpdateDto ticketsUpdateDto, string ticketIdStr);
         Task<Result> UpdateTicketUser([FromBody] TicketsUpdateDto ticketsUpdateDto, string ticketIdStr);
+        Task<Result> AbandonATicketAsync(string ticketIdStr);
+        Task<Result<byte[]>> ExportTicketsAsync(FilterTicketsDto filterDto);
     }
 }

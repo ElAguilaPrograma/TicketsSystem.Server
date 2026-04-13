@@ -31,7 +31,7 @@ namespace TicketsSystem.Api.Controllers
                 return NotFound(new { error = result.Errors.First().Message });
 
             if (result.HasError<ForbiddenError>())
-                return Forbid();
+                return StatusCode(403, new { error = result.Errors.First().Message });
 
             if (result.HasError<UnauthorizedError>())
                 return Unauthorized(new { error = result.Errors.First().Message });
@@ -47,7 +47,8 @@ namespace TicketsSystem.Api.Controllers
                     return NotFound(new { error = result.Errors.First().Message });
 
                 if (result.HasError<ForbiddenError>())
-                    return Forbid();
+                    return StatusCode(403, new { error = result.Errors.First().Message });
+
 
                 if (result.HasError<UnauthorizedError>())
                     return Unauthorized(new { error = result.Errors.First().Message });

@@ -169,6 +169,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITicketsRepository, TicketsRepository>();
 builder.Services.AddScoped<ITicketCommentsRepository, TicketCommentsRepository>();
 builder.Services.AddScoped<ITicketsHistoryRepository, TicketsHistoryRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -178,6 +179,7 @@ builder.Services.AddScoped<IGetUserRole, GetUserRoleService>();
 builder.Services.AddScoped<ITicketCommetsService, TicketCommentsService>();
 builder.Services.AddScoped<ITicketHistoryService, TicketHistoryService>();
 builder.Services.AddScoped<ITicketHubService, TicketHubService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 // Validations 
 builder.Services.AddTransient<IValidator<UserCreateDto>, UserCreateValidator>();
 builder.Services.AddTransient<IValidator<UserUpdateDto>, UserUpdateValidator>();

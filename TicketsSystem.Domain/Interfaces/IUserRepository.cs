@@ -9,4 +9,5 @@ public interface IUserRepository : IGenericRepository<User>
     Task<IEnumerable<Ticket>> UserManagedTickets(Guid userId);
     Task<(IEnumerable<User> Users, int TotalCount)> GetAllPaginatedWithFilters(int page, int pageSize, string? role = null, bool? isActive = null, string? searchQuery = null);
     Task<IEnumerable<User>> ExportUsersWithFilters(string? role = null, bool? isActive = null);
+    Task<bool> UserExist(Guid userId);
 }

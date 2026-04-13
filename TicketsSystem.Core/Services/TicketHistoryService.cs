@@ -49,6 +49,7 @@ namespace TicketsSystem.Core.Services
                     ChangeGroupId = g.Key,
                     ChangedAt = g.First().ChangedAt,
                     ChangedByUserId = g.First().ChangedByUserId,
+                    ChangedByUserFullName = g.First().ChangedByUser.FullName,
                     Changes = g.Select(t => new TicketHistoryReadDto
                     {
                         TicketId = t.TicketId,

@@ -74,9 +74,35 @@ namespace TicketsSystem.Api.Controllers
         public async Task<IActionResult> ReopenTickets(string ticketId)
             => ProcessResult(await _ticketsService.ReopenTicketsAsync(ticketId));
 
+        [HttpPut("abandonticket/{ticketId}")]
+        [Authorize(Roles = "Admin, Agent")]
+        public async Task<IActionResult> AbandonTicket(string ticketId)
+            => ProcessResult(await _ticketsService.AbandonATicketAsync(ticketId));
+
         [HttpGet("getcurrentuserticketscount")]
         [Authorize]
         public async Task<IActionResult> GetCurrentUserTicketsCount()
             => ProcessResult(await _ticketsService.GetCurrentUserTicketsCountAsync());
+
+        [HttpGet("gettodayscount")]
+        [Authorize]
+        public async Task<IActionResult> GetTodaysTicketsCount()
+            => ProcessResult(await _ticketsService.GetTodaysTicketsCountAsync());
+
+        [HttpGet("exporttickets")]
+        [Authorize]
+        public async Task<IActionResult> ExportTickets([FromQuery] FilterTicketsDto filterTicketsDto)
+        {
+            var result = await _ticketsService.ExportTicketsAsync(filterTicketsDto);
+            
+            if (result.IsSuccess)
+            {
+                return File(result.Value,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "tickets.xlsx");
+            }
+
+            return ProcessResult(result);
+        }
     }
 }

@@ -22,6 +22,9 @@ public class UserRepository : GenericRepository<User>, IUserRepository
     public Task<bool> EmailExist(string email)
         => _users.AnyAsync(u => u.Email == email);
 
+    public Task<bool> UserExist(Guid userId)
+        => _users.AnyAsync(u =>u.UserId == userId);
+
     public async Task<(IEnumerable<User> Users, int TotalCount)> GetAllPaginatedWithFilters(int page, int pageSize, string? role = null, bool? isActive = null, string? querySearch = null)
     {
         var query = _users.AsQueryable();

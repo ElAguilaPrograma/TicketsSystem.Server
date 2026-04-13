@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace TicketsSystem.Domain.Entities;
 
 public class Notification

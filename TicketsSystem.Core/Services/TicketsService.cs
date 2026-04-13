@@ -1,5 +1,6 @@
+using ClosedXML.Excel;
 using FluentResults;
-using System.Reflection.Metadata.Ecma335;
+using TicketsSystem.Core.DTOs.NotificationDTO;
 using TicketsSystem.Core.DTOs.PaginationDTO;
 using TicketsSystem.Core.DTOs.TicketsDTO;
 using TicketsSystem.Core.Errors;
@@ -18,7 +19,7 @@ namespace TicketsSystem.Core.Services
         private readonly IUserRepository _userRepository;
         private readonly ITicketsHistoryRepository _ticketsHistoryRepository;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ITicketHubService _ticketHubService;
+        private readonly INotificationService _notificationService;
 
         public TicketsService(ITicketsRepository ticketsRepository,
             ICurrentUserService currentUserService,
@@ -26,7 +27,7 @@ namespace TicketsSystem.Core.Services
             IUserRepository userRepository,
             ITicketsHistoryRepository ticketsHistoryRepository,
             IUnitOfWork unitOfWork,
-            ITicketHubService ticketHubService)
+            INotificationService notificationService)
         {
             _ticketsRepository = ticketsRepository;
             _currentUserService = currentUserService;
@@ -34,20 +35,25 @@ namespace TicketsSystem.Core.Services
             _userRepository = userRepository;
             _ticketsHistoryRepository = ticketsHistoryRepository;
             _unitOfWork = unitOfWork;
-            _ticketHubService = ticketHubService;
+            _notificationService = notificationService;
         }
 
         public async Task<Result<PagedResult<TicketsReadDto>>> GetAllTicketsWithFiltersAsync(GetAllTicketsFilterDto filterDto)
         {
             Guid? filterByUserId = null;
+            Guid? filterByAssignedToUserId = null;
 
-            if (!filterDto.CurrentUserOnly && _currentUserService.GetCurrentUserRole() != "Admin")
+            if (!filterDto.CurrentUserOnly && _currentUserService.GetCurrentUserRole() == "User")
                 return Result.Fail(new ForbiddenError("You are not authorized to perform this action."));
-
+            if (!filterDto.AssignedToMeOnly && _currentUserService.GetCurrentUserRole() == "User")
+                return Result.Fail(new ForbiddenError("You are not authorized to perform this action."));
             if (filterDto.CurrentUserOnly)
                 filterByUserId = _currentUserService.GetCurrentUserId();
             else if (!string.IsNullOrEmpty(filterDto.UserId))
                 filterByUserId = Guid.Parse(filterDto.UserId);
+
+            if (filterDto.AssignedToMeOnly)
+                filterByAssignedToUserId = _currentUserService.GetCurrentUserId();
 
             var (tickets, totalCount) = await _ticketsRepository.GetAllTicketsPaginatedWithFilters(
                 filterDto.Page,
@@ -57,7 +63,9 @@ namespace TicketsSystem.Core.Services
                 filterDto.QuerySearch,
                 filterDto.Month,
                 filterDto.Year,
-                filterByUserId);
+                filterByUserId,
+                filterDto.HasAssignment,
+                filterByAssignedToUserId);
 
             var result = new PagedResult<TicketsReadDto>
             {
@@ -94,6 +102,33 @@ namespace TicketsSystem.Core.Services
             return Result.Ok(ticketsDTOs).WithSuccess(new OkSuccess("User tickets retrieved successfully."));
         }
 
+        public async Task<Result<PagedResult<TicketsReadDto>>> GetMyAssignedTicketsAsync(GetAllTicketsFilterDto filterDto)
+        {
+            Guid currentUserId = _currentUserService.GetCurrentUserId();
+
+            var (tickets, totalCount) = await _ticketsRepository.GetAllTicketsPaginatedWithFilters(
+                filterDto.Page,
+                filterDto.PageSize,
+                filterDto.Status,
+                filterDto.Priority,
+                filterDto.QuerySearch,
+                filterDto.Month,
+                filterDto.Year,
+                assignedToUserId: currentUserId,
+                hasAssignment: true);
+
+            var result = new PagedResult<TicketsReadDto>
+            {
+                Data = tickets.Select(MapToDto),
+                TotalCount = totalCount,
+                Page = filterDto.Page,
+                PageSize = filterDto.PageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / filterDto.PageSize)
+            };
+
+            return Result.Ok(result);
+        }
+
         public async Task<Result> CreateATicketAsync(TicketsCreateDto ticketsCreateDto)
         {
 
@@ -123,12 +158,20 @@ namespace TicketsSystem.Core.Services
 
             await _unitOfWork.SaveChangesAsync();
 
-            // Notify via SignalR
+            // Notify via SignalR and save to DB
             var ticketWithData = await _ticketsRepository.GetTicketById(newTicket.TicketId);
             if (ticketWithData != null)
             {
                 var ticketReadDto = MapToDto(ticketWithData);
-                await _ticketHubService.NotifyTicketCreated(ticketReadDto);
+                var notificationDto = new NotificationCreateDto
+                {
+                    UserId = ticketWithData.CreatedByUserId,
+                    Type = nameof(NotificationsTypes.NewTicket),
+                    Message = $"A new ticket was creted: '{ticketWithData.Title}'",
+                    IsRead = false,
+                    Ticket = ticketReadDto
+                };
+                await _notificationService.CreateANotificationAsync(notificationDto);
             }
 
             return Result.Ok().WithSuccess(new CreatedSuccess("Ticket created successfully."));
@@ -174,7 +217,6 @@ namespace TicketsSystem.Core.Services
             if (ticketsUpdateDto.StatusId == 4)
                 ticket.ClosedAt = DateTime.UtcNow;
 
-            _ticketsRepository.Update(ticket);
             await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
             await _unitOfWork.SaveChangesAsync();
 
@@ -185,7 +227,15 @@ namespace TicketsSystem.Core.Services
                 {
                     var newTicketReadDto = MapToDto(updatedTicket);
 
-                    await _ticketHubService.NotifyTicketStatusChanged(newTicketReadDto, updatedTicket.CreatedByUserId);
+                    var notificationDto = new NotificationCreateDto
+                    {
+                        UserId = updatedTicket.CreatedByUserId,
+                        Type = nameof(NotificationsTypes.UpdateTicket),
+                        Message = $"The status of the ticket '{updatedTicket.Title}' has changed.",
+                        IsRead = false,
+                        Ticket = newTicketReadDto
+                    };
+                    await _notificationService.CreateANotificationAsync(notificationDto);
                 }
             }
 
@@ -280,6 +330,21 @@ namespace TicketsSystem.Core.Services
             await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
             await _unitOfWork.SaveChangesAsync();
 
+            var closedTicket = await _ticketsRepository.GetTicketById(ticketId);
+            if (closedTicket != null)
+            {
+                var ticketReadDto = MapToDto(closedTicket);
+                var notificationDto = new NotificationCreateDto
+                {
+                    UserId = closedTicket.CreatedByUserId,
+                    Type = nameof(NotificationsTypes.UpdateTicket),
+                    Message = $"The ticket '{closedTicket.Title}' has been closed.",
+                    IsRead = false,
+                    Ticket = ticketReadDto
+                };
+                await _notificationService.CreateANotificationAsync(notificationDto);
+            }
+
             return Result.Ok().WithSuccess(new OkSuccess("Ticket closed successfully."));
         }
 
@@ -304,6 +369,21 @@ namespace TicketsSystem.Core.Services
             _ticketsRepository.Update(ticket);
             await _ticketsHistoryRepository.TrackChanges(ticket, _currentUserService.GetCurrentUserId());
             await _unitOfWork.SaveChangesAsync();
+
+            var reopenedTicket = await _ticketsRepository.GetTicketById(ticketId);
+            if (reopenedTicket != null)
+            {
+                var ticketReadDto = MapToDto(reopenedTicket);
+                var notificationDto = new NotificationCreateDto
+                {
+                    UserId = reopenedTicket.CreatedByUserId,
+                    Type = nameof(NotificationsTypes.UpdateTicket),
+                    Message = $"The ticket '{reopenedTicket.Title}' has been reopened.",
+                    IsRead = false,
+                    Ticket = ticketReadDto
+                };
+                await _notificationService.CreateANotificationAsync(notificationDto);
+            }
 
             return Result.Ok().WithSuccess(new OkSuccess("Ticket reopened successfully."));
         }
@@ -343,6 +423,12 @@ namespace TicketsSystem.Core.Services
             };
         }
 
+        public async Task<Result<int>> GetTodaysTicketsCountAsync()
+        {
+            var count = await _ticketsRepository.GetTodaysTicketsCount();
+            return Result.Ok(count).WithSuccess("Today's tickets count retrieved successfully.");
+        }
+
         public async Task<Result<TicketsReadDto>> GetTicketByIdAsync(string ticketIdStr)
         {
             Guid ticketId = Guid.Parse(ticketIdStr);
@@ -355,6 +441,65 @@ namespace TicketsSystem.Core.Services
             var ticketDto = MapToDto(ticket);
 
             return Result.Ok(ticketDto).WithSuccess("Ticket loaded correctly");
+        }
+
+        public async Task<Result<byte[]>> ExportTicketsAsync(FilterTicketsDto filterDto)
+        {
+            Guid? filterByUserId = null;
+            Guid? filterByAssignedToUserId = null;
+
+            if (!filterDto.CurrentUserOnly && _currentUserService.GetCurrentUserRole() == "User")
+                return Result.Fail(new ForbiddenError("You are not authorized to perform this action."));
+            if (!filterDto.AssignedToMeOnly && _currentUserService.GetCurrentUserRole() == "User")
+                return Result.Fail(new ForbiddenError("You are not authorized to perform this action."));
+            if (filterDto.CurrentUserOnly)
+                filterByUserId = _currentUserService.GetCurrentUserId();
+            else if (!string.IsNullOrWhiteSpace(filterDto.UserId))
+                filterByUserId = Guid.Parse(filterDto.UserId);
+
+            if (filterDto.AssignedToMeOnly)
+                filterByAssignedToUserId = _currentUserService.GetCurrentUserId();
+
+            var filterTickets = await _ticketsRepository.ExportTicketsWithFilters(
+                filterDto.Status,
+                filterDto.Priority,
+                filterDto.QuerySearch,
+                filterDto.Month,
+                filterDto.Year,
+                filterByUserId,
+                filterDto.HasAssignment,
+                filterByAssignedToUserId);
+
+            var tickets = filterTickets.Select(t => new
+            {
+                TicketId = t.TicketId.ToString(),
+                Title = t.Title,
+                Status = t.Status.Name,
+                Priority = t.Priority.Name,
+                CreatedBy = t.CreatedByUser.FullName,
+                AssignedTo = t.AssignedToUser?.FullName ?? "Unassigned",
+                CreatedAt = t.CreatedAt.AddMinutes(-filterDto.TimezoneOffsetMinutes)
+            });
+
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Tickets");
+
+                worksheet.Cell(1, 1).Value = "Ticket Id";
+                worksheet.Cell(1, 2).Value = "Title";
+                worksheet.Cell(1, 3).Value = "Status";
+                worksheet.Cell(1, 4).Value = "Priority";
+                worksheet.Cell(1, 5).Value = "Created By";
+                worksheet.Cell(1, 6).Value = "Assigned To";
+                worksheet.Cell(1, 7).Value = "Created At";
+
+                worksheet.Cell(2, 1).InsertData(tickets);
+
+                using var stream = new MemoryStream();
+                workbook.SaveAs(stream);
+
+                return Result.Ok(stream.ToArray()).WithSuccess(new OkSuccess("Tickets exported successfully."));
+            }
         }
 
         private static TicketsReadDto MapToDto(Ticket t) => new()

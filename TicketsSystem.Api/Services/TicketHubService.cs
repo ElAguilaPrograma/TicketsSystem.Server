@@ -16,16 +16,18 @@ namespace TicketsSystem.Api.Services
         }
 
         public async Task NotifyTicketCreated(TicketsReadDto ticket)
-            => await _hubContext.Clients.Group("ManagementGroup").SendAsync("ReceiveNewTicket", ticket);
+            => await _hubContext.Clients.Group("AgentsGroup").SendAsync("ReceiveNewTicket", ticket);
 
         public async Task NotifyTicketStatusChanged(TicketsReadDto ticket, Guid userId)
             => await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNewTicketStatusChange", ticket);
 
-        public async Task NotifyTicketCommentCreated(TicketsReadComment comment, Guid ticketCreatorUserId)
+        public async Task NotifyTicketCommentCreated(TicketsReadComment comment, Guid ticketCreatorUserId, Guid? assignedAgentUserId)
         {
-            await _hubContext.Clients.Group("ManagementGroup").SendAsync("ReceiveNewTicketComment", comment);
-            if (!comment.IsInternal)
+            if (!comment.IsInternal && comment.UserId != ticketCreatorUserId)
                 await _hubContext.Clients.User(ticketCreatorUserId.ToString()).SendAsync("ReceiveNewTicketComment", comment);
+
+            if (assignedAgentUserId.HasValue && comment.UserId != assignedAgentUserId.Value)
+                await _hubContext.Clients.User(assignedAgentUserId.Value.ToString()).SendAsync("ReceiveNewTicketComment", comment);
         }
 
     }

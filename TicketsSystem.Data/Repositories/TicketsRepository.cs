@@ -21,7 +21,9 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
         string? querySearch = null,
         int? month = null,
         int? year = null,
-        Guid? userId = null)
+        Guid? userId = null,
+        bool? hasAssignment = null,
+        Guid? assignedToUserId = null)
     {
         var query = _tickets
             .Include(t => t.Status)
@@ -32,6 +34,8 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
 
         if (userId != null)
             query = query.Where(t => t.CreatedByUserId == userId);
+        if (assignedToUserId != null)
+            query = query.Where(t => t.AssignedToUserId == assignedToUserId);
         if (!string.IsNullOrWhiteSpace(status) && status != "All")
             query = query.Where(t => t.Status.Name == status);
         if (!string.IsNullOrWhiteSpace(priority) && priority != "All")
@@ -46,6 +50,14 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
             query = query.Where(t => t.Title.ToLower().Contains(querySearch));
         }
 
+        if (hasAssignment.HasValue)
+        {
+            if (hasAssignment.Value)
+                query = query.Where(t => t.AssignedToUserId != null);
+            else
+                query = query.Where(t => t.AssignedToUserId == null);
+        }
+
         var totalCount = await query.CountAsync();
         var tickets = await query
             .OrderByDescending(t => t.CreatedAt)
@@ -54,6 +66,54 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
             .ToListAsync();
 
         return (tickets, totalCount);
+    }
+
+    public async Task<IEnumerable<Ticket>> ExportTicketsWithFilters(
+        string? status = null, 
+        string? priority = null, 
+        string? querySearch = null,
+        int? month = null,
+        int? year = null,
+        Guid? userId = null,
+        bool? hasAssignment = null,
+        Guid? assignedToUserId = null)
+    {
+        var query = _tickets
+            .Include(t => t.Status)
+            .Include(t => t.Priority)
+            .Include(t => t.AssignedToUser)
+            .Include(t => t.CreatedByUser)
+            .AsQueryable();
+
+        if (userId != null)
+            query = query.Where(t => t.CreatedByUserId == userId);
+        if (assignedToUserId != null)
+            query = query.Where(t => t.AssignedToUserId == assignedToUserId);
+        if (!string.IsNullOrWhiteSpace(status) && status != "All")
+            query = query.Where(t => t.Status.Name == status);
+        if (!string.IsNullOrWhiteSpace(priority) && priority != "All")
+            query = query.Where(t => t.Priority.Name == priority);
+        if (month != null)
+            query = query.Where(t => t.CreatedAt.Month == month);
+        if (year != null)
+            query = query.Where(t => t.CreatedAt.Year == year);
+        if (!string.IsNullOrWhiteSpace(querySearch))
+        {
+            querySearch = querySearch.ToLower();
+            query = query.Where(t => t.Title.ToLower().Contains(querySearch));
+        }
+
+        if (hasAssignment.HasValue)
+        {
+            if (hasAssignment.Value)
+                query = query.Where(t => t.AssignedToUserId != null);
+            else
+                query = query.Where(t => t.AssignedToUserId == null);
+        }
+
+        return await query
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<Ticket>> GetCurrentUserTickets(Guid currentUserId, string userRole)
@@ -104,5 +164,11 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
             .GroupBy(t => t.StatusId)
             .Select(g => new { StatusId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.StatusId, x => x.Count);
+    }
+
+    public async Task<int> GetTodaysTicketsCount()
+    {
+        var today = DateTime.UtcNow.Date;
+        return await _tickets.CountAsync(t => t.CreatedAt.Date == today);
     }
 }
