@@ -211,3 +211,7 @@ app.MapHub<TicketHub>("/ticketHub");
 app.MapControllers();
 
 app.Run();
+
+public partial class Program
+{
+}

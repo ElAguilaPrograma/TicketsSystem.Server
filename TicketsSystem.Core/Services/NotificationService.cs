@@ -1,6 +1,5 @@
 using FluentResults;
 using TicketsSystem.Core.DTOs.NotificationDTO;
-using TicketsSystem.Core.DTOs.TicketsDTO;
 using TicketsSystem.Core.Errors;
 using TicketsSystem.Core.Interfaces;
 using TicketsSystem.Domain.Entities;
