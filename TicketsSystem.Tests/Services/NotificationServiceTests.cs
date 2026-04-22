@@ -70,6 +70,7 @@ public class NotificationServiceTests
         var input = new NotificationCreateDto
         {
             UserId = userId,
+            ContentId = ticket.TicketId,
             Type = nameof(NotificationsTypes.NewTicket),
             Message = "Ticket created",
             IsRead = false,
@@ -83,6 +84,7 @@ public class NotificationServiceTests
         result.IsSuccess.Should().BeTrue();
         _notificationRepository.Verify(x => x.Create(It.Is<Notification>(n =>
             n.UserId == input.UserId &&
+            n.ContentId == input.ContentId &&
             n.Type == input.Type &&
             n.Message == input.Message &&
             n.IsRead == input.IsRead)), Times.Once);
@@ -98,6 +100,7 @@ public class NotificationServiceTests
         {
             NotificationId = notificationId,
             UserId = Guid.NewGuid(),
+            ContentId = Guid.NewGuid(),
             Type = nameof(NotificationsTypes.NewTicket),
             Message = "Ticket updated",
             IsRead = false,

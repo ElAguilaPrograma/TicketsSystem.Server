@@ -29,6 +29,5 @@ namespace TicketsSystem.Api.Services
             if (assignedAgentUserId.HasValue && comment.UserId != assignedAgentUserId.Value)
                 await _hubContext.Clients.User(assignedAgentUserId.Value.ToString()).SendAsync("ReceiveNewTicketComment", comment);
         }
-
     }
 }

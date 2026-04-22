@@ -1,6 +1,7 @@
 using FluentResults;
 using TicketsSystem.Core.DTOs.NotificationDTO;
 using TicketsSystem.Core.Errors;
+using TicketsSystem.Core.Helpers.Mappers;
 using TicketsSystem.Core.Interfaces;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Enums;
@@ -38,20 +39,13 @@ namespace TicketsSystem.Core.Services
 
             var notifications = await _notificationRepository.GetUserNotification(userId);
 
-            var notificationsDto = notifications.Select(MapToDto);
+            var notificationsDto = notifications.Select(n => n.ToReadDto());
             return Result.Ok(notificationsDto);
         }
 
         public async Task<Result> CreateANotificationAsync(NotificationCreateDto notificationCreateDto)
         {
-            Notification notification = new Notification()
-            {
-                UserId = notificationCreateDto.UserId,
-                Type = notificationCreateDto.Type,
-                Message = notificationCreateDto.Message,
-                IsRead = notificationCreateDto.IsRead,
-                CreatedAt = DateTime.UtcNow
-            };
+            var notification = notificationCreateDto.ToEntity();
 
             await _notificationRepository.Create(notification);
             await _unitOfWork.SaveChangesAsync();
@@ -65,6 +59,11 @@ namespace TicketsSystem.Core.Services
                 else if (notificationCreateDto.Type == nameof(NotificationsTypes.UpdateTicket))
                 {
                     await _ticketHubService.NotifyTicketStatusChanged(notificationCreateDto.Ticket, notificationCreateDto.UserId);
+                }
+                else if (notificationCreateDto.Type == nameof(NotificationsTypes.CreateANewComment))
+                {
+                    await _ticketHubService.NotifyTicketCommentCreated(notificationCreateDto.TicketsReadComment!, 
+                        notificationCreateDto.UserId, notificationCreateDto.Ticket.AssignedToUserId);
                 }
             }
 
@@ -87,15 +86,5 @@ namespace TicketsSystem.Core.Services
 
             return Result.Ok();
         }
-
-        private static NotificationReadDto MapToDto(Notification t) => new()
-        {
-            NotificationId = t.NotificationId,
-            UserId = t.UserId,
-            Type = t.Type,
-            Message = t.Message,
-            IsRead = t.IsRead,
-            CreatedAt = t.CreatedAt
-        };
     }
 }

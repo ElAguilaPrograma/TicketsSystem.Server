@@ -4,6 +4,7 @@ using TicketsSystem.Core.DTOs.NotificationDTO;
 using TicketsSystem.Core.DTOs.PaginationDTO;
 using TicketsSystem.Core.DTOs.TicketsDTO;
 using TicketsSystem.Core.Errors;
+using TicketsSystem.Core.Helpers.Mappers;
 using TicketsSystem.Core.Interfaces;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Enums;
@@ -45,7 +46,7 @@ namespace TicketsSystem.Core.Services
 
             if (!filterDto.CurrentUserOnly && _currentUserService.GetCurrentUserRole() == "User")
                 return Result.Fail(new ForbiddenError("You are not authorized to perform this action."));
-            if (!filterDto.AssignedToMeOnly && _currentUserService.GetCurrentUserRole() == "User")
+            if (filterDto.AssignedToMeOnly && _currentUserService.GetCurrentUserRole() == "User")
                 return Result.Fail(new ForbiddenError("You are not authorized to perform this action."));
             if (filterDto.CurrentUserOnly)
                 filterByUserId = _currentUserService.GetCurrentUserId();
@@ -69,7 +70,7 @@ namespace TicketsSystem.Core.Services
 
             var result = new PagedResult<TicketsReadDto>
             {
-                Data = tickets.Select(MapToDto),
+                Data = tickets.Select(t => t.ToReadDto()),
                 TotalCount = totalCount,
                 Page = filterDto.Page,
                 PageSize = filterDto.PageSize,
@@ -86,7 +87,7 @@ namespace TicketsSystem.Core.Services
 
             var tickets = await _ticketsRepository.GetCurrentUserTickets(currentUserId, currentUserRole);
 
-            IEnumerable<TicketsReadDto> ticketsDTOs = tickets.Select(MapToDto);
+            IEnumerable<TicketsReadDto> ticketsDTOs = tickets.Select(t => t.ToReadDto());
 
             return Result.Ok(ticketsDTOs).WithSuccess(new OkSuccess("User tickets retrieved successfully."));
         }
@@ -97,7 +98,7 @@ namespace TicketsSystem.Core.Services
 
             var tickets = await _ticketsRepository.GetTicketsByUserId(userId);
 
-            IEnumerable<TicketsReadDto> ticketsDTOs = tickets.Select(MapToDto);
+            IEnumerable<TicketsReadDto> ticketsDTOs = tickets.Select(t => t.ToReadDto());
 
             return Result.Ok(ticketsDTOs).WithSuccess(new OkSuccess("User tickets retrieved successfully."));
         }
@@ -119,7 +120,7 @@ namespace TicketsSystem.Core.Services
 
             var result = new PagedResult<TicketsReadDto>
             {
-                Data = tickets.Select(MapToDto),
+                Data = tickets.Select(t => t.ToReadDto()),
                 TotalCount = totalCount,
                 Page = filterDto.Page,
                 PageSize = filterDto.PageSize,
@@ -134,15 +135,7 @@ namespace TicketsSystem.Core.Services
 
             Guid userId = _currentUserService.GetCurrentUserId();
 
-            var newTicket = new Ticket
-            {
-                Title = ticketsCreateDto.Title,
-                Description = ticketsCreateDto.Description,
-                StatusId = (int)TicketsStatusValue.Open,
-                PriorityId = ticketsCreateDto.PriorityId,
-                CreatedByUserId = userId,
-                CreatedAt = DateTime.UtcNow
-            };
+            var newTicket = ticketsCreateDto.ToEntity(userId);
 
             await _ticketsRepository.Create(newTicket);
 
@@ -162,10 +155,11 @@ namespace TicketsSystem.Core.Services
             var ticketWithData = await _ticketsRepository.GetTicketById(newTicket.TicketId);
             if (ticketWithData != null)
             {
-                var ticketReadDto = MapToDto(ticketWithData);
+                var ticketReadDto = ticketWithData.ToReadDto();
                 var notificationDto = new NotificationCreateDto
                 {
                     UserId = ticketWithData.CreatedByUserId,
+                    ContentId = ticketWithData.TicketId,
                     Type = nameof(NotificationsTypes.NewTicket),
                     Message = $"A new ticket was creted: '{ticketWithData.Title}'",
                     IsRead = false,
@@ -225,11 +219,12 @@ namespace TicketsSystem.Core.Services
                 var updatedTicket = await _ticketsRepository.GetTicketById(ticketId);
                 if (updatedTicket != null)
                 {
-                    var newTicketReadDto = MapToDto(updatedTicket);
+                    var newTicketReadDto = updatedTicket.ToReadDto();
 
                     var notificationDto = new NotificationCreateDto
                     {
                         UserId = updatedTicket.CreatedByUserId,
+                        ContentId = updatedTicket.TicketId,
                         Type = nameof(NotificationsTypes.UpdateTicket),
                         Message = $"The status of the ticket '{updatedTicket.Title}' has changed.",
                         IsRead = false,
@@ -333,10 +328,11 @@ namespace TicketsSystem.Core.Services
             var closedTicket = await _ticketsRepository.GetTicketById(ticketId);
             if (closedTicket != null)
             {
-                var ticketReadDto = MapToDto(closedTicket);
+                var ticketReadDto = closedTicket.ToReadDto();
                 var notificationDto = new NotificationCreateDto
                 {
                     UserId = closedTicket.CreatedByUserId,
+                    ContentId = closedTicket.TicketId,
                     Type = nameof(NotificationsTypes.UpdateTicket),
                     Message = $"The ticket '{closedTicket.Title}' has been closed.",
                     IsRead = false,
@@ -373,10 +369,11 @@ namespace TicketsSystem.Core.Services
             var reopenedTicket = await _ticketsRepository.GetTicketById(ticketId);
             if (reopenedTicket != null)
             {
-                var ticketReadDto = MapToDto(reopenedTicket);
+                var ticketReadDto = reopenedTicket.ToReadDto();
                 var notificationDto = new NotificationCreateDto
                 {
                     UserId = reopenedTicket.CreatedByUserId,
+                    ContentId = reopenedTicket.TicketId,
                     Type = nameof(NotificationsTypes.UpdateTicket),
                     Message = $"The ticket '{reopenedTicket.Title}' has been reopened.",
                     IsRead = false,
@@ -438,7 +435,7 @@ namespace TicketsSystem.Core.Services
             if (ticket == null)
                 return Result.Fail(new NotFoundError("The ticket does not exist"));
 
-            var ticketDto = MapToDto(ticket);
+            var ticketDto = ticket.ToReadDto();
 
             return Result.Ok(ticketDto).WithSuccess("Ticket loaded correctly");
         }
@@ -502,22 +499,5 @@ namespace TicketsSystem.Core.Services
             }
         }
 
-        private static TicketsReadDto MapToDto(Ticket t) => new()
-        {
-            TicketId = t.TicketId,
-            Title = t.Title,
-            Description = t.Description,
-            StatusId = t.StatusId,
-            StatusName = t.Status.Name,
-            PriorityId = t.PriorityId,
-            PriorityName = t.Priority.Name,
-            AssignedToUserId = t.AssignedToUserId,
-            AssignedToUser = t.AssignedToUser?.FullName,
-            CreatedByUser = t.CreatedByUser.FullName,
-            CreatedByUserId = t.CreatedByUserId,
-            CreatedAt = t.CreatedAt,
-            UpdatedAt = t.UpdatedAt,
-            ClosedAt = t.ClosedAt
-        };
     }
 }

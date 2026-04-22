@@ -6,6 +6,9 @@ using TicketsSystem.Domain.Interfaces;
 using TicketsSystem.Core.Interfaces;
 using Microsoft.AspNetCore.Localization;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using TicketsSystem.Core.DTOs.NotificationDTO;
+using TicketsSystem.Core.Helpers.Mappers;
+using TicketsSystem.Domain.Enums;
 
 namespace TicketsSystem.Core.Services
 {
@@ -16,18 +19,21 @@ namespace TicketsSystem.Core.Services
         private readonly ICurrentUserService _currentUserService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ITicketHubService _ticketHubService;
+        private readonly INotificationService _notificationService;
         public TicketCommentsService(
             ITicketCommentsRepository ticketCommentsRepository,
             ICurrentUserService currentUserService,
             ITicketsRepository ticketsRepository,
             IUnitOfWork unitOfWork,
-            ITicketHubService ticketHubService)
+            ITicketHubService ticketHubService,
+            INotificationService notificationService)
         {
             _ticketCommentsRepository = ticketCommentsRepository;
             _currentUserService = currentUserService;
             _ticketsRepository = ticketsRepository;
             _unitOfWork = unitOfWork;
             _ticketHubService = ticketHubService;
+            _notificationService = notificationService;
         }
 
         public async Task<Result<TicketsCreateComment>> CreateTicketCommentAsync(string ticketIdStr, TicketsCreateComment ticketsCreateComment)
@@ -55,31 +61,28 @@ namespace TicketsSystem.Core.Services
                 return Result.Fail(new ForbiddenError("Only the user who created the ticket and the agent in charge can comment."));
             }
 
-            var ticketComment = new TicketComment
-            {
-                TicketId = ticketId,
-                UserId = currentUserId,
-                Content = ticketsCreateComment.Content,
-                IsInternal = ticketsCreateComment.IsInternal,
-                CreatedAt = DateTime.UtcNow
-            };
+            var ticketComment = ticketsCreateComment.ToEntity(ticketId, currentUserId);
 
             await _ticketCommentsRepository.Create(ticketComment);
             await _unitOfWork.SaveChangesAsync();
 
             if (ticket != null)
             {
-                var readComment = new TicketsReadComment
+                var readComment = ticketComment.ToReadDto(await _currentUserService.GetCurrentUserName());
+                var readTicket = ticket.ToReadDto();
+
+                var newNotificationComment = new NotificationCreateDto
                 {
-                    CommentId = ticketComment.CommentId,
-                    TicketId = ticketComment.TicketId,
                     UserId = ticketComment.UserId,
-                    Content = ticketComment.Content,
-                    IsInternal = ticketComment.IsInternal,
-                    CreatedByUser = await _currentUserService.GetCurrentUserName(),
-                    CreatedAt = ticketComment.CreatedAt
+                    ContentId = ticketComment.TicketId,
+                    Type = nameof(NotificationsTypes.CreateANewComment),
+                    Message = "A new ticket comment was created.",
+                    IsRead = false,
+                    Ticket = readTicket,
+                    TicketsReadComment = readComment
                 };
-                await _ticketHubService.NotifyTicketCommentCreated(readComment, ticket.CreatedByUserId, ticket.AssignedToUserId);
+
+                await _notificationService.CreateANotificationAsync(newNotificationComment);
             }
 
             return Result.Ok().WithSuccess(new CreatedSuccess("Comment created successfully."));
@@ -97,16 +100,7 @@ namespace TicketsSystem.Core.Services
 
             var ticketsComments = await _ticketCommentsRepository.GetTicketComments(ticketId);
 
-            IEnumerable<TicketsReadComment> ticketsReadComments = ticketsComments.Select(tc => new TicketsReadComment
-            {
-                CommentId = tc.CommentId,
-                TicketId = tc.TicketId,
-                UserId = tc.UserId,
-                Content = tc.Content,
-                IsInternal = tc.IsInternal,
-                CreatedByUser = tc.User.FullName,
-                CreatedAt = tc.CreatedAt
-            });
+            IEnumerable<TicketsReadComment> ticketsReadComments = ticketsComments.Select(tc => tc.ToReadDto());
 
             return Result.Ok(ticketsReadComments).WithSuccess(new OkSuccess("Comments retrieved successfully."));
         }

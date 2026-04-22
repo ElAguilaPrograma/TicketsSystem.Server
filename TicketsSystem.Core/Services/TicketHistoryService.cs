@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using TicketsSystem.Core.DTOs.TicketsHistoryDTO;
 using TicketsSystem.Core.Errors;
+using TicketsSystem.Core.Helpers.Mappers;
 using TicketsSystem.Core.Interfaces;
 using TicketsSystem.Domain.Interfaces;
 
@@ -44,23 +45,7 @@ namespace TicketsSystem.Core.Services
             var groupedHistory = ticketsRaw
                 .GroupBy(t => t.ChangeGroupId)
                 .OrderByDescending(g => g.First().ChangedAt)
-                .Select(g => new TicketHistoryGroupDto
-                {
-                    ChangeGroupId = g.Key,
-                    ChangedAt = g.First().ChangedAt,
-                    ChangedByUserId = g.First().ChangedByUserId,
-                    ChangedByUserFullName = g.First().ChangedByUser.FullName,
-                    Changes = g.Select(t => new TicketHistoryReadDto
-                    {
-                        TicketId = t.TicketId,
-                        ChangedByUserId = t.ChangedByUserId,
-                        ChangeGroupId = t.ChangeGroupId,
-                        FieldName = t.FieldName,
-                        OldValue = t.OldValue,
-                        NewValue = t.NewValue,
-                        ChangedAt = t.ChangedAt
-                    })
-                });
+                .Select(g => g.ToGroupDto());
 
             return Result.Ok(groupedHistory).WithSuccess(new OkSuccess("Ticket history retrieved successfully."));
         }

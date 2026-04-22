@@ -9,6 +9,7 @@ using System.Text;
 using TicketsSystem.Core.DTOs.PaginationDTO;
 using TicketsSystem.Core.DTOs.UserDTO;
 using TicketsSystem.Core.Errors;
+using TicketsSystem.Core.Helpers.Mappers;
 using TicketsSystem.Core.Interfaces;
 using TicketsSystem.Core.Validations.UserValidations;
 using TicketsSystem.Domain.Entities;
@@ -66,15 +67,7 @@ namespace TicketsSystem.Core.Services
                 isActive,
                 fiilterDto.QuerySearch);
 
-            var usersDTOs = users.Select(u => new UserReadDto
-            {
-                UserId = u.UserId,
-                FullName = u.FullName,
-                Email = u.Email,
-                Role = u.Role,
-                IsActive = u.IsActive,
-                CreatedAt = u.CreatedAt
-            });
+            var usersDTOs = users.Select(u => u.ToReadDto());
 
             var result = new PagedResult<UserReadDto>
             {
@@ -96,15 +89,7 @@ namespace TicketsSystem.Core.Services
             if (user == null)
                 return Result.Fail(new NotFoundError("The user does not exist"));
 
-            UserReadDto userReadDto = new UserReadDto
-            {
-                UserId = user.UserId,
-                FullName = user.FullName,
-                Email = user.Email,
-                Role = user.Role,
-                IsActive = user.IsActive,
-                CreatedAt = user.CreatedAt
-            };
+            UserReadDto userReadDto = user.ToReadDto();
 
             return Result.Ok(userReadDto).WithSuccess(new OkSuccess("User retrieved successfully."));
         }
@@ -115,14 +100,7 @@ namespace TicketsSystem.Core.Services
             if (await _userRepository.EmailExist(userCreateDto.Email))
                 return Result.Fail(new BadRequestError("The user already exist"));
 
-            var newUser = new User
-            {
-                FullName = userCreateDto.FullName,
-                Email = userCreateDto.Email,
-                PasswordHash = userCreateDto.ConfirmPassword,
-                Role = userCreateDto.Role,
-                IsActive = userCreateDto.IsActive
-            };
+            var newUser = userCreateDto.ToEntity();
 
             newUser.PasswordHash = _passwordHasher.HashPassword(newUser, userCreateDto.Password);
 
@@ -252,15 +230,7 @@ namespace TicketsSystem.Core.Services
             var email = _currentUserService.GetCurrentUserEmail();
             var role = _currentUserService.GetCurrentUserRole();
             var user = await _userRepository.GetById(userId);
-            var fullName = user!.FullName;
-
-            var currentUserClaimData = new CurrentUserDto()
-            {
-                UserId = userId,
-                Email = email,
-                Role = role,
-                FullName = fullName
-            };
+            var currentUserClaimData = user!.ToCurrentUserDto(email, role);
 
             return Result.Ok(currentUserClaimData).WithSuccess(new OkSuccess("Current user retrieved successfully."));
         }
