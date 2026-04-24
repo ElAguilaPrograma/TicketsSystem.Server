@@ -9,5 +9,6 @@ namespace TicketsSystem.Core.Interfaces
         Task NotifyTicketCommentCreated(TicketsReadComment comment, Guid ticketCreatorUserId, Guid? assignedAgentUserId);
         Task NotifyTicketCreated(TicketsReadDto ticket);
         Task NotifyTicketStatusChanged(TicketsReadDto ticket, Guid userId);
+        Task SendTicketToControlPanel(TicketsReadDto ticket);
     }
 }

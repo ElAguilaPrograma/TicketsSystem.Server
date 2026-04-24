@@ -55,6 +55,7 @@ namespace TicketsSystem.Core.Services
                 if (notificationCreateDto.Type == nameof(NotificationsTypes.NewTicket))
                 {
                     await _ticketHubService.NotifyTicketCreated(notificationCreateDto.Ticket);
+                    await _ticketHubService.SendTicketToControlPanel(notificationCreateDto.Ticket);
                 }
                 else if (notificationCreateDto.Type == nameof(NotificationsTypes.UpdateTicket))
                 {

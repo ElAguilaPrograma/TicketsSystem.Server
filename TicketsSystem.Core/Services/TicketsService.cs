@@ -280,8 +280,8 @@ namespace TicketsSystem.Core.Services
             Guid userId = Guid.Parse(userIdStr);
             Guid ticketId = Guid.Parse(ticketIdSrt);
 
-            if (await _getUseRole.UserIsAgent(userId) == false)
-                return Result.Fail(new ForbiddenError("The user is not Agent"));
+            if (await _getUseRole.UserIsUser(userId))
+                return Result.Fail(new ForbiddenError("The user is not Agent or Admin"));
 
             var ticket = await _ticketsRepository.GetTicketById(ticketId);
 
