@@ -422,3 +422,14 @@ start-projects.bat
 
 # Credentials
 TestCredentials.md
+
+# Deployment
+Deployment.md
+Properties/
+TicketsSystem.Deployment.targets
+dotnet-tools.json
+
+# appsettings.
+appsettings.json
+appsettings.Production.json
+appsettings.Development.json

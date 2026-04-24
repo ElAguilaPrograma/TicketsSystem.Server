@@ -18,6 +18,9 @@ namespace TicketsSystem.Api.Services
         public async Task NotifyTicketCreated(TicketsReadDto ticket)
             => await _hubContext.Clients.Group("AgentsGroup").SendAsync("ReceiveNewTicket", ticket);
 
+        public async Task SendTicketToControlPanel(TicketsReadDto ticket)
+            => await _hubContext.Clients.Group("ManagementGroup").SendAsync("ReceiveTicket", ticket);
+
         public async Task NotifyTicketStatusChanged(TicketsReadDto ticket, Guid userId)
             => await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNewTicketStatusChange", ticket);
 

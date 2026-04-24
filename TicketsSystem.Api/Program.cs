@@ -19,6 +19,7 @@ using TicketsSystem.Data;
 using TicketsSystem.Data.Repositories;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Interfaces;
+using Microsoft.Azure.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -158,8 +159,6 @@ builder.Services.AddCors(options =>
         .AllowCredentials();
     });
 });
-// SignalR 
-builder.Services.AddSignalR();
 // Database conexion
 builder.Services.AddDbContext<SystemTicketsContext>(options =>
     options.UseSqlServer(
@@ -189,7 +188,44 @@ builder.Services.AddTransient<IValidator<TicketsCreateDto>, TicketsCreateValidat
 builder.Services.AddTransient<IValidator<TicketsUpdateDto>, TicketsUpdateValidator>();
 builder.Services.AddTransient<IValidator<GetAllTicketsFilterDto>, TicketsFilterValidation>();
 
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddSignalR();
+}
+else
+{
+    builder.Services.AddSignalR().AddAzureSignalR(builder.Configuration["Azure:SignalR:ConnectionString"]!);
+}
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<SystemTicketsContext>();
+    if (dbContext.Database.IsRelational())
+    {
+        dbContext.Database.Migrate();
+    }
+
+    if (!dbContext.Users.Any())
+    {
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
+        var adminUser = new User
+        {
+            UserId = Guid.NewGuid(),
+            FullName = "Administrator",
+            Email = "admin@example.com",
+            Role = "Admin",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, "Admin123!");
+        dbContext.Users.Add(adminUser);
+        dbContext.SaveChanges();
+        Console.WriteLine("[SEED] Default admin user created successfully.");
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

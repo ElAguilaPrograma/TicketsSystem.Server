@@ -12,8 +12,8 @@ using TicketsSystem.Data;
 namespace TicketsSystem.Data.Migrations
 {
     [DbContext(typeof(SystemTicketsContext))]
-    [Migration("20260220051341_AddChangeGroupIdToTicketHistory")]
-    partial class AddChangeGroupIdToTicketHistory
+    [Migration("20260422050729_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -100,6 +100,9 @@ namespace TicketsSystem.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasDefaultValueSql("(newid())");
+
+                    b.Property<Guid?>("ContentId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
