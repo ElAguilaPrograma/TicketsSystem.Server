@@ -36,7 +36,7 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
 			.Options;
 
 		await using var dbContext = new SystemTicketsContext(options);
-		await dbContext.Database.EnsureCreatedAsync();
+      await dbContext.Database.MigrateAsync();
 		await SeedReferenceDataAsync(dbContext);
 		await SeedUsersAsync(dbContext);
 	}

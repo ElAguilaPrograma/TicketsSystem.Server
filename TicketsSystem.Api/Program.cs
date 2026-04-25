@@ -157,6 +157,11 @@ builder.Services.AddCors(options =>
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials();
+
+        policy.WithOrigins("https://zealous-sea-0a120c810.7.azurestaticapps.net")
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
     });
 });
 // Database conexion
@@ -188,7 +193,7 @@ builder.Services.AddTransient<IValidator<TicketsCreateDto>, TicketsCreateValidat
 builder.Services.AddTransient<IValidator<TicketsUpdateDto>, TicketsUpdateValidator>();
 builder.Services.AddTransient<IValidator<GetAllTicketsFilterDto>, TicketsFilterValidation>();
 
-if (builder.Environment.IsDevelopment())
+if (builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing"))
 {
     builder.Services.AddSignalR();
 }
@@ -224,6 +229,76 @@ using (var scope = app.Services.CreateScope())
         dbContext.Users.Add(adminUser);
         dbContext.SaveChanges();
         Console.WriteLine("[SEED] Default admin user created successfully.");
+    }
+
+    if (!dbContext.TicketStatuses.Any())
+    {
+        var openStatus = new TicketStatus
+        {
+            Name = "Open"
+        };
+
+        var inProgressStatus = new TicketStatus
+        {
+            Name = "In Progress"
+        };
+
+        var onHoldStatus = new TicketStatus
+        {
+            Name = "On Hold"
+        };
+
+        var closedStatus = new TicketStatus
+        {
+            Name = "Closed"
+        };
+
+        var reopenedStatus = new TicketStatus
+        {
+            Name = "Reopened"
+        };
+
+        dbContext.TicketStatuses.Add(openStatus);
+        dbContext.TicketStatuses.Add(inProgressStatus);
+        dbContext.TicketStatuses.Add(onHoldStatus);
+        dbContext.TicketStatuses.Add(closedStatus);
+        dbContext.TicketStatuses.Add(reopenedStatus);
+        dbContext.SaveChanges();
+        Console.WriteLine("[SEED] Default ticket status created successfully.");
+    }
+
+    if (!dbContext.TicketPriorities.Any())
+    {
+        var lowPriority = new TicketPriority
+        {
+            Name = "Low",
+            Level = 1
+        };
+
+        var mediumPriority = new TicketPriority
+        {
+            Name = "Medium",
+            Level = 2
+        };
+
+        var highPriority = new TicketPriority
+        {
+            Name = "High",
+            Level = 3
+        };
+
+        var criticalPriority = new TicketPriority
+        {
+            Name = "Critical",
+            Level = 4
+        };
+
+        dbContext.TicketPriorities.Add(lowPriority);
+        dbContext.TicketPriorities.Add(mediumPriority);
+        dbContext.TicketPriorities.Add(highPriority);
+        dbContext.TicketPriorities.Add(criticalPriority);
+        dbContext.SaveChanges();
+        Console.WriteLine("[SEED] Default ticket priorities created successfully.");
     }
 }
 
