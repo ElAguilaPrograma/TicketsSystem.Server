@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using TicketsSystem.Core.DTOs.UserDTO;
 using TicketsSystem.Core.Interfaces;
 

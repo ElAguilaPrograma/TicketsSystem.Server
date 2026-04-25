@@ -73,7 +73,7 @@ namespace TicketsSystem.Core.Services
 
                 var newNotificationComment = new NotificationCreateDto
                 {
-                    UserId = ticketComment.UserId,
+                    UserId = ticket.CreatedByUserId,
                     ContentId = ticketComment.TicketId,
                     Type = nameof(NotificationsTypes.CreateANewComment),
                     Message = "A new ticket comment was created.",
