@@ -2,7 +2,7 @@ using TicketsSystem.Core.DTOs.TicketsDTO;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Enums;
 
-namespace TicketsSystem.Core.Helpers.Mappers;
+namespace TicketsSystem.Core.Mappers;
 
 public static class TicketMappers
 {

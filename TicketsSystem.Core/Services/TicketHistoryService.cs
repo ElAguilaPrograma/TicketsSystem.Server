@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Text;
 using TicketsSystem.Core.DTOs.TicketsHistoryDTO;
 using TicketsSystem.Core.Errors;
-using TicketsSystem.Core.Helpers.Mappers;
 using TicketsSystem.Core.Interfaces;
+using TicketsSystem.Core.Mappers;
 using TicketsSystem.Domain.Interfaces;
 
 namespace TicketsSystem.Core.Services

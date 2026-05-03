@@ -9,6 +9,7 @@ using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using TicketsSystem.Core.DTOs.NotificationDTO;
 using TicketsSystem.Core.Helpers.Mappers;
 using TicketsSystem.Domain.Enums;
+using TicketsSystem.Core.Mappers;
 
 namespace TicketsSystem.Core.Services
 {

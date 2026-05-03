@@ -1,7 +1,7 @@
 using TicketsSystem.Core.DTOs.NotificationDTO;
 using TicketsSystem.Domain.Entities;
 
-namespace TicketsSystem.Core.Helpers.Mappers;
+namespace TicketsSystem.Core.Mappers;
 
 public static class NotificationMappers
 {

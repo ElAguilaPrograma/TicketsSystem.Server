@@ -20,6 +20,7 @@ using TicketsSystem.Data.Repositories;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Interfaces;
 using Microsoft.Azure.SignalR;
+using Supabase.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -148,6 +149,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         }
     };
 });
+// Supabase Storage
+builder.Services.AddSingleton(sp =>
+{
+    var storageUrl = builder.Configuration["Supabase:Url"];
+    var key = builder.Configuration["Supabase:key"];
+
+    return new Supabase.Storage.Client(storageUrl, new Dictionary<string, string>
+    {
+        { "Authorization", $"Bearer {key}" }
+    });
+});
 // CORS
 builder.Services.AddCors(options =>
 {
@@ -184,6 +196,7 @@ builder.Services.AddScoped<ITicketCommetsService, TicketCommentsService>();
 builder.Services.AddScoped<ITicketHistoryService, TicketHistoryService>();
 builder.Services.AddScoped<ITicketHubService, TicketHubService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IStorageService, SupabaseStorageService>();
 // Validations 
 builder.Services.AddTransient<IValidator<UserCreateDto>, UserCreateValidator>();
 builder.Services.AddTransient<IValidator<UserUpdateDto>, UserUpdateValidator>();

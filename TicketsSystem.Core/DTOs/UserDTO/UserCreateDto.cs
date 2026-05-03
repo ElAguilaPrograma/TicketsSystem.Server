@@ -1,4 +1,6 @@
-﻿namespace TicketsSystem.Core.DTOs.UserDTO
+﻿using Microsoft.AspNetCore.Http;
+
+namespace TicketsSystem.Core.DTOs.UserDTO
 {
     public class UserCreateDto
     {
@@ -8,6 +10,7 @@
         public string ConfirmPassword { get; set; } = null!;
         public string Role { get; set; } = null!;
         public bool IsActive { get; set; }
+        public IFormFile? ProfilePic { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

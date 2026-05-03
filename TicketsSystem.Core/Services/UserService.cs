@@ -9,10 +9,12 @@ using System.Text;
 using TicketsSystem.Core.DTOs.PaginationDTO;
 using TicketsSystem.Core.DTOs.UserDTO;
 using TicketsSystem.Core.Errors;
-using TicketsSystem.Core.Helpers.Mappers;
+using TicketsSystem.Core.Helpers;
 using TicketsSystem.Core.Interfaces;
+using TicketsSystem.Core.Mappers;
 using TicketsSystem.Core.Validations.UserValidations;
 using TicketsSystem.Domain.Entities;
+using TicketsSystem.Domain.Enums;
 using TicketsSystem.Domain.Interfaces;
 
 namespace TicketsSystem.Core.Services
@@ -26,13 +28,15 @@ namespace TicketsSystem.Core.Services
         private readonly IConfiguration _config;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IStorageService _storageService;
         public UserService(
             IUserRepository userRepository,
             UserPasswordValidator passwordValidator,
             IPasswordHasher<User> passwordHasher,
             IConfiguration configuration,
             IUnitOfWork unitOfWork,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IStorageService storageService)
         {
             _userRepository = userRepository;
             _userPasswordValidator = passwordValidator;
@@ -40,6 +44,7 @@ namespace TicketsSystem.Core.Services
             _config = configuration;
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
+            _storageService = storageService;
         }
 
         public async Task<Result<PagedResult<UserReadDto>>> GetAllUsersWithFilterAsync(GetAllUsersFilterDto fiilterDto)
@@ -96,11 +101,31 @@ namespace TicketsSystem.Core.Services
 
         public async Task<Result> CreateNewUserAsync(UserCreateDto userCreateDto)
         {
-
             if (await _userRepository.EmailExist(userCreateDto.Email))
                 return Result.Fail(new BadRequestError("The user already exist"));
 
             var newUser = userCreateDto.ToEntity();
+
+            if (userCreateDto.ProfilePic != null)
+            {
+                if (!FilesValidatorHelper.IsValidSize(userCreateDto.ProfilePic))
+                    return Result.Fail(new PayloadTooLargeError("The file is too large, 25MB limit."));
+
+                if (!FilesValidatorHelper.IsValidImage(userCreateDto.ProfilePic))
+                    return Result.Fail(new UnsupportedMediaTypeError("Invalid file format, only images are accepted."));
+
+                var uploadResult = await _storageService.Upload(nameof(StorageBucket.ProfilePics), userCreateDto.ProfilePic);
+                if (uploadResult.IsSuccess)
+                {
+                    var (url, path) = uploadResult.Value;
+                    newUser.ProfilePicUrl = url;
+                    newUser.ProfilePicPath = path;
+                }
+                else
+                {
+                    return Result.Fail(new InternalServerError("There was a problem uploading the image."));
+                }
+            }
 
             newUser.PasswordHash = _passwordHasher.HashPassword(newUser, userCreateDto.Password);
 

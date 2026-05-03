@@ -3,6 +3,7 @@ using TicketsSystem.Core.DTOs.NotificationDTO;
 using TicketsSystem.Core.Errors;
 using TicketsSystem.Core.Helpers.Mappers;
 using TicketsSystem.Core.Interfaces;
+using TicketsSystem.Core.Mappers;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Enums;
 using TicketsSystem.Domain.Interfaces;

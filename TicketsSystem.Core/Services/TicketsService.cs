@@ -6,6 +6,7 @@ using TicketsSystem.Core.DTOs.TicketsDTO;
 using TicketsSystem.Core.Errors;
 using TicketsSystem.Core.Helpers.Mappers;
 using TicketsSystem.Core.Interfaces;
+using TicketsSystem.Core.Mappers;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Enums;
 using TicketsSystem.Domain.Interfaces;

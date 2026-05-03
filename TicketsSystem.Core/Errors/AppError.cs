@@ -46,9 +46,9 @@ namespace TicketsSystem.Core.Errors
             : base (message, 413) { }
     }
 
-    public class UnsupportedMediaType : AppError
+    public class UnsupportedMediaTypeError : AppError
     {
-        public UnsupportedMediaType(string message) 
+        public UnsupportedMediaTypeError(string message) 
             : base (message, 415) { }
     }
 }
