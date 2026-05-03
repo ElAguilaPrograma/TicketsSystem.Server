@@ -32,6 +32,7 @@ public partial class SystemTicketsContext : DbContext
     public virtual DbSet<TicketStatus> TicketStatuses { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<TicketAttachment> TicketAttachments { get; set; } 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

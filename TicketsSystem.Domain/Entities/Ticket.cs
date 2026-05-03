@@ -8,11 +8,11 @@ public class Ticket
     public string Title { get; set; } = null!;
     public string Description { get; set; } = null!;
     private int _statusId;
-    public int StatusId 
-    { 
+    public int StatusId
+    {
         get => _statusId;
-        set => _statusId = Enum.IsDefined(typeof(TicketsStatusValue), value) 
-            ? value 
+        set => _statusId = Enum.IsDefined(typeof(TicketsStatusValue), value)
+            ? value
             : throw new ArgumentException($"Invalid StatusId: {value}");
     }
     private int _priorityId;
@@ -37,6 +37,7 @@ public class Ticket
     public virtual TicketStatus Status { get; set; } = null!;
     public virtual ICollection<TicketComment> TicketComments { get; set; } = [];
     public virtual ICollection<TicketHistory> TicketHistories { get; set; } = [];
+    public virtual ICollection<TicketAttachment> TicketAttachments { get; set; } = [];
     public Ticket()
     {
         TicketId = Guid.NewGuid();
