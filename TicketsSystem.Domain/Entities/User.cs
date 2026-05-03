@@ -18,6 +18,7 @@ public class User
         } 
     }
     public bool IsActive { get; set; }
+    public string? ProfilePicUrl { get; set; }
     public DateTime CreatedAt { get; set; }
 
     // Navigation properties
