@@ -11,4 +11,9 @@ public class Mcpresponse
 
     // Navigation properties
     public virtual Mcprequest Mcprequest { get; set; } = null!;
+    public Mcpresponse()
+    {
+        McpresponseId = Guid.NewGuid();
+        CreatedAt = DateTime.UtcNow;
+    }
 }

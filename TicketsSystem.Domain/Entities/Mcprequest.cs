@@ -11,4 +11,10 @@ public class Mcprequest
     // Navigation properties
     public virtual ICollection<Mcpresponse> Mcpresponses { get; set; } = [];
     public virtual Ticket Ticket { get; set; } = null!;
+
+    public Mcprequest()
+    {
+        McprequestId = Guid.NewGuid();
+        RequestedAt = DateTime.UtcNow;
+    }
 }

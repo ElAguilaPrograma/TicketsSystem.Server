@@ -14,4 +14,9 @@ public class Notification
 
     // Navigation properties
     public virtual User User { get; set; } = null!;
+    public Notification()
+    {
+        NotificationId = Guid.NewGuid();
+        CreatedAt = DateTime.UtcNow;
+    }
 }

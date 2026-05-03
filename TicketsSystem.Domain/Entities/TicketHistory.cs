@@ -14,4 +14,9 @@ public class TicketHistory
     // Navigation properties
     public virtual User ChangedByUser { get; set; } = null!;
     public virtual Ticket Ticket { get; set; } = null!;
+    public TicketHistory()
+    {
+        HistoryId = Guid.NewGuid();
+        ChangedAt = DateTime.UtcNow;
+    }
 }

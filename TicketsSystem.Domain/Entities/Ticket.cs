@@ -37,4 +37,9 @@ public class Ticket
     public virtual TicketStatus Status { get; set; } = null!;
     public virtual ICollection<TicketComment> TicketComments { get; set; } = [];
     public virtual ICollection<TicketHistory> TicketHistories { get; set; } = [];
+    public Ticket()
+    {
+        TicketId = Guid.NewGuid();
+        CreatedAt = DateTime.UtcNow;
+    }
 }

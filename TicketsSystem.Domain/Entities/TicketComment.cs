@@ -12,4 +12,9 @@ public class TicketComment
     // Navigation properties
     public virtual Ticket Ticket { get; set; } = null!;
     public virtual User User { get; set; } = null!;
+    public TicketComment()
+    {
+        CommentId = Guid.NewGuid();
+        CreatedAt = DateTime.UtcNow;
+    }
 }

@@ -166,7 +166,7 @@ builder.Services.AddCors(options =>
 });
 // Database conexion
 builder.Services.AddDbContext<SystemTicketsContext>(options =>
-    options.UseSqlServer(
+    options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();

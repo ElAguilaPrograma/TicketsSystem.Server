@@ -26,4 +26,9 @@ public class User
     public virtual ICollection<TicketComment> TicketComments { get; set; } = [];
     public virtual ICollection<Ticket> TicketCreatedByUsers { get; set; } = [];
     public virtual ICollection<TicketHistory> TicketHistories { get; set; } = [];
+    public User()
+    {
+        UserId = Guid.NewGuid();
+        CreatedAt = DateTime.UtcNow;
+    }
 }

@@ -42,10 +42,8 @@ public partial class SystemTicketsContext : DbContext
             entity.ToTable("MCPRequests");
 
             entity.Property(e => e.McprequestId)
-                .HasDefaultValueSql("(newid())")
                 .HasColumnName("MCPRequestId");
             entity.Property(e => e.PromptVersion).HasMaxLength(20);
-            entity.Property(e => e.RequestedAt).HasDefaultValueSql("(sysdatetime())");
             entity.Property(e => e.UseCase).HasMaxLength(100);
 
             entity.HasOne(d => d.Ticket).WithMany(p => p.Mcprequests)
@@ -61,10 +59,8 @@ public partial class SystemTicketsContext : DbContext
             entity.ToTable("MCPResponses");
 
             entity.Property(e => e.McpresponseId)
-                .HasDefaultValueSql("(newid())")
                 .HasColumnName("MCPResponseId");
             entity.Property(e => e.Confidence).HasColumnType("decimal(5, 2)");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
             entity.Property(e => e.McprequestId).HasColumnName("MCPRequestId");
             entity.Property(e => e.ResponseType).HasMaxLength(50);
 
@@ -80,8 +76,6 @@ public partial class SystemTicketsContext : DbContext
 
             entity.HasIndex(e => e.UserId, "IX_Notifications_UserId");
 
-            entity.Property(e => e.NotificationId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
             entity.Property(e => e.Message).HasMaxLength(255);
             entity.Property(e => e.Type).HasMaxLength(50);
 
@@ -103,8 +97,6 @@ public partial class SystemTicketsContext : DbContext
 
             entity.HasIndex(e => e.StatusId, "IX_Tickets_Status");
 
-            entity.Property(e => e.TicketId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
             entity.Property(e => e.Title).HasMaxLength(200);
 
             entity.HasOne(d => d.AssignedToUser).WithMany(p => p.TicketAssignedToUsers)
@@ -133,9 +125,6 @@ public partial class SystemTicketsContext : DbContext
 
             entity.HasIndex(e => e.TicketId, "IX_Comments_TicketId");
 
-            entity.Property(e => e.CommentId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
-
             entity.HasOne(d => d.Ticket).WithMany(p => p.TicketComments)
                 .HasForeignKey(d => d.TicketId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -155,8 +144,6 @@ public partial class SystemTicketsContext : DbContext
 
             entity.HasIndex(e => e.TicketId, "IX_History_TicketId");
 
-            entity.Property(e => e.HistoryId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.ChangedAt).HasDefaultValueSql("(sysdatetime())");
             entity.Property(e => e.FieldName).HasMaxLength(100);
             entity.Property(e => e.NewValue).HasMaxLength(255);
             entity.Property(e => e.OldValue).HasMaxLength(255);
@@ -196,8 +183,6 @@ public partial class SystemTicketsContext : DbContext
 
             entity.HasIndex(e => e.Email, "UQ__Users__A9D105341B6078ED").IsUnique();
 
-            entity.Property(e => e.UserId).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
             entity.Property(e => e.Email).HasMaxLength(150);
             entity.Property(e => e.FullName).HasMaxLength(150);
             entity.Property(e => e.IsActive).HasDefaultValue(true);

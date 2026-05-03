@@ -1,12 +1,13 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace TicketsSystem.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialPostgres : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,10 +16,10 @@ namespace TicketsSystem.Data.Migrations
                 name: "TicketPriorities",
                 columns: table => new
                 {
-                    PriorityId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Level = table.Column<int>(type: "int", nullable: false)
+                    PriorityId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -29,9 +30,9 @@ namespace TicketsSystem.Data.Migrations
                 name: "TicketStatuses",
                 columns: table => new
                 {
-                    StatusId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                    StatusId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -42,13 +43,13 @@ namespace TicketsSystem.Data.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "(newid())"),
-                    FullName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    Role = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "(sysdatetime())")
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    FullName = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
+                    Email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
+                    PasswordHash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Role = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -59,13 +60,13 @@ namespace TicketsSystem.Data.Migrations
                 name: "Notifications",
                 columns: table => new
                 {
-                    NotificationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "(newid())"),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ContentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    IsRead = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "(sysdatetime())")
+                    NotificationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContentId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Message = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    IsRead = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -81,16 +82,16 @@ namespace TicketsSystem.Data.Migrations
                 name: "Tickets",
                 columns: table => new
                 {
-                    TicketId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "(newid())"),
-                    Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    StatusId = table.Column<int>(type: "int", nullable: false),
-                    PriorityId = table.Column<int>(type: "int", nullable: false),
-                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AssignedToUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "(sysdatetime())"),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ClosedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    TicketId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    StatusId = table.Column<int>(type: "integer", nullable: false),
+                    PriorityId = table.Column<int>(type: "integer", nullable: false),
+                    CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AssignedToUserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    ClosedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -121,11 +122,11 @@ namespace TicketsSystem.Data.Migrations
                 name: "MCPRequests",
                 columns: table => new
                 {
-                    MCPRequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "(newid())"),
-                    TicketId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UseCase = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    PromptVersion = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    RequestedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "(sysdatetime())")
+                    MCPRequestId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TicketId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UseCase = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    PromptVersion = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    RequestedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -141,12 +142,12 @@ namespace TicketsSystem.Data.Migrations
                 name: "TicketComments",
                 columns: table => new
                 {
-                    CommentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "(newid())"),
-                    TicketId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsInternal = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "(sysdatetime())")
+                    CommentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TicketId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    IsInternal = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -167,14 +168,14 @@ namespace TicketsSystem.Data.Migrations
                 name: "TicketHistory",
                 columns: table => new
                 {
-                    HistoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "(newid())"),
-                    TicketId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ChangedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ChangeGroupId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FieldName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    OldValue = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    NewValue = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    ChangedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "(sysdatetime())")
+                    HistoryId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TicketId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ChangedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ChangeGroupId = table.Column<Guid>(type: "uuid", nullable: false),
+                    FieldName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    OldValue = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    NewValue = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    ChangedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -195,12 +196,12 @@ namespace TicketsSystem.Data.Migrations
                 name: "MCPResponses",
                 columns: table => new
                 {
-                    MCPResponseId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "(newid())"),
-                    MCPRequestId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ResponseType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    Confidence = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
-                    Payload = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "(sysdatetime())")
+                    MCPResponseId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MCPRequestId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ResponseType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Confidence = table.Column<decimal>(type: "numeric(5,2)", nullable: true),
+                    Payload = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
