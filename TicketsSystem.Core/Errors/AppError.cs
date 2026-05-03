@@ -33,4 +33,22 @@ namespace TicketsSystem.Core.Errors
         public UnauthorizedError(string message)
             : base(message, 401) { }
     }
+
+    public class InternalServerError : AppError
+    {
+        public InternalServerError(string message)
+            : base (message, 500) { }
+    }
+
+    public class PayloadTooLargeError : AppError
+    {
+        public PayloadTooLargeError(string message)
+            : base (message, 413) { }
+    }
+
+    public class UnsupportedMediaType : AppError
+    {
+        public UnsupportedMediaType(string message) 
+            : base (message, 415) { }
+    }
 }
