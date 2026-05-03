@@ -202,8 +202,8 @@ namespace TicketsSystem.Core.Services
                 if (user == null)
                     return Result.Fail(new NotFoundError("The agent you are trying to assign does not exist."));
 
-                if (await _getUseRole.UserIsAgent(ticketsUpdateDto.AssignedToUserId.Value) == false)
-                    return Result.Fail(new ForbiddenError("The user is not Agent"));
+                if (await _getUseRole.UserIsUser(_currentUserService.GetCurrentUserId()))
+                    return Result.Fail(new ForbiddenError("The user is not Agent or Admin"));
 
                 ticket.AssignedToUserId = ticketsUpdateDto.AssignedToUserId;
             }
@@ -292,6 +292,7 @@ namespace TicketsSystem.Core.Services
                 return Result.Fail(new NotFoundError("The ticket does not exist"));
 
             ticket.AssignedToUserId = userId;
+            ticket.StatusId = (int)TicketsStatusValue.InProgress;
             ticket.UpdatedAt = DateTime.UtcNow;
 
             _ticketsRepository.Update(ticket);
@@ -302,9 +303,7 @@ namespace TicketsSystem.Core.Services
         }
 
         public async Task<Result> AcceptTickets(string ticketIdStr)
-        {
-            return await AssingTicketAsync(_currentUserService.GetCurrentUserId().ToString(), ticketIdStr);
-        }
+            => await AssingTicketAsync(_currentUserService.GetCurrentUserId().ToString(), ticketIdStr);
 
         public async Task<Result> CloseTicketsAsync(string ticketIdStr)
         {

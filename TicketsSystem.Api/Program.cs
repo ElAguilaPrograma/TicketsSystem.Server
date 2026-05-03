@@ -229,6 +229,7 @@ using (var scope = app.Services.CreateScope())
         dbContext.Users.Add(adminUser);
         dbContext.SaveChanges();
         Console.WriteLine("[SEED] Default admin user created successfully.");
+        Console.WriteLine("It is recommended to change your email and password.");
     }
 
     if (!dbContext.TicketStatuses.Any())
