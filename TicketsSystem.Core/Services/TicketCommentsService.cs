@@ -7,7 +7,7 @@ using TicketsSystem.Core.Interfaces;
 using Microsoft.AspNetCore.Localization;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using TicketsSystem.Core.DTOs.NotificationDTO;
-using TicketsSystem.Core.Helpers.Mappers;
+using TicketsSystem.Core.Helpers;
 using TicketsSystem.Domain.Enums;
 using TicketsSystem.Core.Mappers;
 

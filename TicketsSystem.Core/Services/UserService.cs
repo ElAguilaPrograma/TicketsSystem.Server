@@ -1,5 +1,7 @@
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Spreadsheet;
 using FluentResults;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -196,6 +198,17 @@ namespace TicketsSystem.Core.Services
             user.Role = userUpdateDto.Role;
             user.IsActive = userUpdateDto.IsActive;
 
+            if (userUpdateDto.ProfilePic != null)
+            {
+                if (!FilesValidatorHelper.IsValidSize(userUpdateDto.ProfilePic))
+                    return Result.Fail(new PayloadTooLargeError("The file is too large, 25MB limit."));
+
+                if (!FilesValidatorHelper.IsValidImage(userUpdateDto.ProfilePic))
+                    return Result.Fail(new UnsupportedMediaTypeError("Invalid file format, only images are accepted."));
+
+                await UploadAProfilePicAsync(userUpdateDto.ProfilePic, userIdStr, false);
+            }
+
             _userRepository.Update(user);
             await _unitOfWork.SaveChangesAsync();
 
@@ -322,6 +335,50 @@ namespace TicketsSystem.Core.Services
 
                 return Result.Ok(stream.ToArray()).WithSuccess(new OkSuccess("Users exported successfully."));
             }
+        }
+
+        public async Task<Result> UploadAProfilePicAsync(IFormFile file, string userIdStr, bool update = true)
+        {
+            if (string.IsNullOrWhiteSpace(userIdStr))
+                return Result.Fail(new BadRequestError("The user id is not valid"));
+
+            if (!FilesValidatorHelper.IsValidSize(file))
+                return Result.Fail(new PayloadTooLargeError("The file is too large, 25MB limit."));
+
+            if (!FilesValidatorHelper.IsValidImage(file))
+                return Result.Fail(new UnsupportedMediaTypeError("Invalid file format, only images are accepted."));
+
+            Guid userId = Guid.Parse(userIdStr);
+
+            if (_currentUserService.GetCurrentUserId() == userId || _currentUserService.GetCurrentUserRole() == "Admin")
+            {
+                var targetUser = await _userRepository.GetById(userId);
+
+                if (targetUser == null)
+                    return Result.Fail(new NotFoundError("The user was not found"));
+
+                var result = await (targetUser.ProfilePicUrl != null && targetUser.ProfilePicPath != null
+                    ? _storageService.UpdateFile(nameof(StorageBucket.ProfilePics), targetUser.ProfilePicPath, file)
+                    : _storageService.Upload(nameof(StorageBucket.ProfilePics), file));
+
+                if (result.IsFailed)
+                    return Result.Fail(new InternalServerError("The upload operation failed"));
+
+                var (url, path) = result.Value;
+
+                targetUser.ProfilePicUrl = url;
+                targetUser.ProfilePicPath = path;
+
+                if (update)
+                {
+                    _userRepository.Update(targetUser);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+
+                return Result.Ok().WithSuccess(new OkSuccess("Profile pic upload with success."));
+            }
+
+            return Result.Fail(new ForbiddenError("Only the owner user can change their profile photo."));
         }
     }
 }

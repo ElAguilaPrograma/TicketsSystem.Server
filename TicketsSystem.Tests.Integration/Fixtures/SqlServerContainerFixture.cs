@@ -32,7 +32,7 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
 		await _container.StartAsync();
 
 		var options = new DbContextOptionsBuilder<SystemTicketsContext>()
-			.UseSqlServer(ConnectionString)
+			.UseNpgsql(ConnectionString)
 			.Options;
 
 		await using var dbContext = new SystemTicketsContext(options);
@@ -52,7 +52,7 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
 	public SystemTicketsContext CreateDbContext()
 	{
 		var options = new DbContextOptionsBuilder<SystemTicketsContext>()
-			.UseSqlServer(ConnectionString)
+			.UseNpgsql(ConnectionString)
 			.Options;
 
 		return new SystemTicketsContext(options);

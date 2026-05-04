@@ -19,7 +19,7 @@ public class Ticket
     public int PriorityId
     {
         get => _priorityId;
-        set => _priorityId = Enum.IsDefined(typeof(TicketsStatusValue), value)
+        set => _priorityId = Enum.IsDefined(typeof(TicketsPriorityValue), value)
             ? value
             : throw new ArgumentException($"Invalid PriorityId: {value}");
     }

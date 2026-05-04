@@ -18,6 +18,8 @@ namespace TicketsSystem.Core.Services
 
         public async Task<Result<(string Url, string Path)>> Upload(string bucketName, IFormFile file)
         {
+            Console.WriteLine("Empezando a subir archivo.....");
+
             var bucket = _storage.From(bucketName);
             using var stream = new MemoryStream();
             await file.CopyToAsync(stream);
@@ -36,6 +38,8 @@ namespace TicketsSystem.Core.Services
 
         public async Task<Result<(string Url, string Path)>> UpdateFile(string bucketName, string supabasePath, IFormFile file)
         {
+            Console.WriteLine("Empezando a actualizar archivo.....");
+
             var bucket = _storage.From(bucketName);
             var info = await bucket.Info(supabasePath);
 

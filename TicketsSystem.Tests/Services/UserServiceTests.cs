@@ -20,6 +20,7 @@ public class UserServiceTests
     private readonly Mock<IPasswordHasher<User>> _passwordHasher = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<ICurrentUserService> _currentUserService = new();
+    private readonly Mock<IStorageService> _storageService = new();
 
     private static IConfiguration BuildConfig()
     {
@@ -43,7 +44,8 @@ public class UserServiceTests
             _passwordHasher.Object,
             BuildConfig(),
             _unitOfWork.Object,
-            _currentUserService.Object);
+            _currentUserService.Object,
+            _storageService.Object);
     }
 
     [Fact]

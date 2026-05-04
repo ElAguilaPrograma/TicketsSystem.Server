@@ -155,7 +155,7 @@ builder.Services.AddSingleton(sp =>
     var storageUrl = builder.Configuration["Supabase:Url"];
     var key = builder.Configuration["Supabase:key"];
 
-    return new Supabase.Storage.Client(storageUrl, new Dictionary<string, string>
+    return new Client(storageUrl, new Dictionary<string, string>
     {
         { "Authorization", $"Bearer {key}" }
     });

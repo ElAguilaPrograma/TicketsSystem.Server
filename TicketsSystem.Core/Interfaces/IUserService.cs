@@ -1,4 +1,5 @@
 using FluentResults;
+using Microsoft.AspNetCore.Http;
 using TicketsSystem.Core.DTOs.PaginationDTO;
 using TicketsSystem.Core.DTOs.UserDTO;
 
@@ -15,5 +16,6 @@ namespace TicketsSystem.Core.Interfaces
         Task<Result<UserCountDto>> GetUsersCount();
         Task<Result<LoginSuccessDto>> LoginAsync(LoginRequest request);
         Task<Result> UpdateUserInformationAsync(UserUpdateDto userUpdateDto, string userIdStr);
+        Task<Result> UploadAProfilePicAsync(IFormFile file, string userIdStr, bool update = true);
     }
 }
