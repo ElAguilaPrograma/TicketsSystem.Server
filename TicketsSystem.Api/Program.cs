@@ -17,6 +17,7 @@ using TicketsSystem.Core.Validations.TicketsValidations;
 using TicketsSystem.Core.Validations.UserValidations;
 using TicketsSystem.Data;
 using TicketsSystem.Data.Repositories;
+using TicketsSystem.Data.Storage;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Interfaces;
 using Microsoft.Azure.SignalR;
@@ -24,8 +25,11 @@ using Supabase.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Logging configuration
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 // Add services to the container.
-
 builder.Services.AddScoped<ValidationFilter>();
 builder.Services.AddControllers(options =>
 {
@@ -62,7 +66,6 @@ builder.Services.AddSwaggerGen(c =>
 // Hash passwords
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 // Access to HttpContext
-// Registrar el acceso al HttpContext
 builder.Services.AddHttpContextAccessor();
 // JWT Configuration
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
@@ -87,7 +90,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
     var issuer = builder.Configuration["Jwt:Issuer"];
     var audience = builder.Configuration["Jwt:Audience"];
     var key = builder.Configuration["Jwt:Key"];
-    Console.WriteLine($"[DEBUG] Startup Config - Issuer: '{issuer}', Audience: '{audience}', KeyLength: {key?.Length ?? 0}");
 
     options.Events = new JwtBearerEvents
     {
@@ -104,47 +106,41 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
             if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/ticketHub"))
                 context.Token = accessToken;
 
-            Console.WriteLine("--------------------------------------------------------------");
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
             var tokenLen = context.Token?.Length ?? 0;
             var tokenPreview = tokenLen > 10 ? context.Token?.Substring(0, 10) : context.Token;
-            Console.WriteLine($"[RECEIVED] Token (Len={tokenLen}): '{tokenPreview}...'");
-            Console.WriteLine("--------------------------------------------------------------");
+            logger.LogDebug("JWT token received (Len={TokenLength}): '{TokenPreview}...'", tokenLen, tokenPreview);
+
             return Task.CompletedTask;
         },
         OnAuthenticationFailed = context =>
         {
-            Console.WriteLine("--------------------------------------------------------------");
-            Console.WriteLine($"[FAIL] Authentication failed: {context.Exception.Message}");
-            Console.WriteLine($"[FAIL] Exception Type: {context.Exception.GetType().Name}");
-            Console.WriteLine("--------------------------------------------------------------");
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogError(context.Exception, "JWT authentication failed: {ExceptionType} - {Message}",
+                context.Exception.GetType().Name, context.Exception.Message);
             return Task.CompletedTask;
         },
         OnTokenValidated = context =>
         {
-            Console.WriteLine("--------------------------------------------------------------");
-            Console.WriteLine($"[SUCCESS] Token validated. User: {context.Principal.Identity.Name}");
-            foreach (var claim in context.Principal.Claims)
-            {
-                Console.WriteLine($"  Claim: {claim.Type} - {claim.Value}");
-            }
-            Console.WriteLine("--------------------------------------------------------------");
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            var claims = string.Join(", ", context.Principal.Claims.Select(c => $"{c.Type}={c.Value}"));
+            logger.LogDebug("JWT token validated for user '{UserName}'. Claims: {Claims}",
+                context.Principal.Identity.Name, claims);
             return Task.CompletedTask;
         },
         OnChallenge = context =>
         {
-            Console.WriteLine("--------------------------------------------------------------");
-            Console.WriteLine($"[CHALLENGE] OnChallenge Triggered.");
-            Console.WriteLine($"[CHALLENGE] Error: '{context.Error}', Desc: '{context.ErrorDescription}'");
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
             if (context.AuthenticateFailure != null)
             {
-                Console.WriteLine($"[CHALLENGE] AuthenticateFailure: {context.AuthenticateFailure.Message}");
-                Console.WriteLine($"[CHALLENGE] Failure Trace: {context.AuthenticateFailure.StackTrace}");
+                logger.LogWarning("JWT challenge triggered. Error: '{Error}', Description: '{Description}', Failure: {FailureMessage}",
+                    context.Error, context.ErrorDescription, context.AuthenticateFailure.Message);
             }
             else
             {
-                Console.WriteLine("[CHALLENGE] No AuthenticateFailure exception found (Silent failure?).");
+                logger.LogWarning("JWT challenge triggered (silent failure). Error: '{Error}', Description: '{Description}'",
+                    context.Error, context.ErrorDescription);
             }
-            Console.WriteLine("--------------------------------------------------------------");
             return Task.CompletedTask;
         }
     };
@@ -196,7 +192,8 @@ builder.Services.AddScoped<ITicketCommetsService, TicketCommentsService>();
 builder.Services.AddScoped<ITicketHistoryService, TicketHistoryService>();
 builder.Services.AddScoped<ITicketHubService, TicketHubService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddScoped<IStorageService, SupabaseStorageService>();
+builder.Services.AddScoped<IFileStorageProvider, SupabaseStorageProvider>();
+builder.Services.AddScoped<IStorageService, StorageService>();
 // Validations 
 builder.Services.AddTransient<IValidator<UserCreateDto>, UserCreateValidator>();
 builder.Services.AddTransient<IValidator<UserUpdateDto>, UserUpdateValidator>();
@@ -220,6 +217,8 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<SystemTicketsContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
     if (dbContext.Database.IsRelational())
     {
         dbContext.Database.Migrate();
@@ -241,8 +240,7 @@ using (var scope = app.Services.CreateScope())
         adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, "Admin123!");
         dbContext.Users.Add(adminUser);
         dbContext.SaveChanges();
-        Console.WriteLine("[SEED] Default admin user created successfully.");
-        Console.WriteLine("It is recommended to change your email and password.");
+        logger.LogInformation("Default admin user created successfully. It is recommended to change the email and password.");
     }
 
     if (!dbContext.TicketStatuses.Any())
@@ -278,7 +276,7 @@ using (var scope = app.Services.CreateScope())
         dbContext.TicketStatuses.Add(closedStatus);
         dbContext.TicketStatuses.Add(reopenedStatus);
         dbContext.SaveChanges();
-        Console.WriteLine("[SEED] Default ticket status created successfully.");
+        logger.LogInformation("Default ticket statuses created successfully.");
     }
 
     if (!dbContext.TicketPriorities.Any())
@@ -312,7 +310,7 @@ using (var scope = app.Services.CreateScope())
         dbContext.TicketPriorities.Add(highPriority);
         dbContext.TicketPriorities.Add(criticalPriority);
         dbContext.SaveChanges();
-        Console.WriteLine("[SEED] Default ticket priorities created successfully.");
+        logger.LogInformation("Default ticket priorities created successfully.");
     }
 }
 

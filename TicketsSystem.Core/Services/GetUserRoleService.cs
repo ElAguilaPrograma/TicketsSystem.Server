@@ -1,5 +1,6 @@
 ﻿using TicketsSystem.Domain.Interfaces;
 using TicketsSystem.Core.Interfaces;
+using TicketsSystem.Domain.Enums;
 
 namespace TicketsSystem.Core.Services
 {

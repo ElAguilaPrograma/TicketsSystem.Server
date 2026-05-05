@@ -429,7 +429,8 @@ Properties/
 TicketsSystem.Deployment.targets
 dotnet-tools.json
 
-# appsettings.
-appsettings.json
-appsettings.Production.json
-appsettings.Development.json
+# Tests
+TicketClientTest/
+
+# Supabase
+supabase/

@@ -4,12 +4,11 @@ using TicketsSystem.Core.Errors;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Interfaces;
 using TicketsSystem.Core.Interfaces;
-using Microsoft.AspNetCore.Localization;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using TicketsSystem.Core.DTOs.NotificationDTO;
 using TicketsSystem.Core.Helpers;
 using TicketsSystem.Domain.Enums;
 using TicketsSystem.Core.Mappers;
+using Microsoft.Extensions.Logging;
 
 namespace TicketsSystem.Core.Services
 {
@@ -21,13 +20,15 @@ namespace TicketsSystem.Core.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ITicketHubService _ticketHubService;
         private readonly INotificationService _notificationService;
+        private readonly ILogger<TicketCommentsService> _logger;
         public TicketCommentsService(
             ITicketCommentsRepository ticketCommentsRepository,
             ICurrentUserService currentUserService,
             ITicketsRepository ticketsRepository,
             IUnitOfWork unitOfWork,
             ITicketHubService ticketHubService,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            ILogger<TicketCommentsService> logger)
         {
             _ticketCommentsRepository = ticketCommentsRepository;
             _currentUserService = currentUserService;
@@ -35,6 +36,7 @@ namespace TicketsSystem.Core.Services
             _unitOfWork = unitOfWork;
             _ticketHubService = ticketHubService;
             _notificationService = notificationService;
+            _logger = logger;
         }
 
         public async Task<Result<TicketsCreateComment>> CreateTicketCommentAsync(string ticketIdStr, TicketsCreateComment ticketsCreateComment)
@@ -55,10 +57,8 @@ namespace TicketsSystem.Core.Services
             if (currentUserId != ticket.CreatedByUserId && 
                 currentUserId != ticket.AssignedToUserId)
             {
-                Console.WriteLine("Se esta ejecutando este bloque de codigo?");
-                Console.WriteLine("Creador del ticket: " + ticket.CreatedByUserId);
-                Console.WriteLine("Asignado a: " + ticket.AssignedToUserId);
-                Console.WriteLine("Current userId: " + _currentUserService.GetCurrentUserId());
+                _logger.LogWarning("Forbidden comment attempt on ticket {TicketId}: user {UserId} is neither the creator {CreatedByUserId} nor the assignee {AssignedToUserId}",
+                    ticketId, currentUserId, ticket.CreatedByUserId, ticket.AssignedToUserId);
                 return Result.Fail(new ForbiddenError("Only the user who created the ticket and the agent in charge can comment."));
             }
 

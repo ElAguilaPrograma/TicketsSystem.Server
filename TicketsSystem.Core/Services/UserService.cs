@@ -116,7 +116,7 @@ namespace TicketsSystem.Core.Services
                 if (!FilesValidatorHelper.IsValidImage(userCreateDto.ProfilePic))
                     return Result.Fail(new UnsupportedMediaTypeError("Invalid file format, only images are accepted."));
 
-                var uploadResult = await _storageService.Upload(nameof(StorageBucket.ProfilePics), userCreateDto.ProfilePic);
+                var uploadResult = await _storageService.UploadAsync(nameof(StorageBucket.ProfilePics), userCreateDto.ProfilePic);
                 if (uploadResult.IsSuccess)
                 {
                     var (url, path) = uploadResult.Value;
@@ -358,8 +358,8 @@ namespace TicketsSystem.Core.Services
                     return Result.Fail(new NotFoundError("The user was not found"));
 
                 var result = await (targetUser.ProfilePicUrl != null && targetUser.ProfilePicPath != null
-                    ? _storageService.UpdateFile(nameof(StorageBucket.ProfilePics), targetUser.ProfilePicPath, file)
-                    : _storageService.Upload(nameof(StorageBucket.ProfilePics), file));
+                    ? _storageService.UpdateFileAsync(nameof(StorageBucket.ProfilePics), targetUser.ProfilePicPath, file)
+                    : _storageService.UploadAsync(nameof(StorageBucket.ProfilePics), file));
 
                 if (result.IsFailed)
                     return Result.Fail(new InternalServerError("The upload operation failed"));

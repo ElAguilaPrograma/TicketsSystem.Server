@@ -120,6 +120,22 @@ public partial class SystemTicketsContext : DbContext
                 .HasConstraintName("FK_Tickets_Status");
         });
 
+        modelBuilder.Entity<TicketAttachment>(entity =>
+        {
+            entity.HasKey(e => e.TicketAttachmentId).HasName("PK_TicketAttachments");
+
+            entity.HasIndex(e => e.TicketId, "IX_TicketAttachments_TicketId");
+
+            entity.Property(e => e.FileName).HasMaxLength(255);
+            entity.Property(e => e.FileUrl).HasMaxLength(500);
+            entity.Property(e => e.Path).HasMaxLength(500);
+
+            entity.HasOne(d => d.Ticket).WithMany(p => p.TicketAttachments)
+                .HasForeignKey(d => d.TicketId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_TicketAttachments_Tickets_TicketId");
+        });
+
         modelBuilder.Entity<TicketComment>(entity =>
         {
             entity.HasKey(e => e.CommentId).HasName("PK__TicketCo__C3B4DFCA2E78B4B3");
