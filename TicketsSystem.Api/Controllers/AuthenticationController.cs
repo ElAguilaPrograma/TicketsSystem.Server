@@ -46,12 +46,12 @@ namespace TicketsSystem.Api.Controllers
 
         [HttpPost("createuser")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> CreateNewUser([FromBody] UserCreateDto userCreateDto)
+        public async Task<IActionResult> CreateNewUser([FromForm] UserCreateDto userCreateDto)
             => ProcessResult(await _userService.CreateNewUserAsync(userCreateDto));
 
         [HttpPut("updateuser/{userId}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateUserInformation([FromBody] UserUpdateDto userUpdateDto, string userId)
+        public async Task<IActionResult> UpdateUserInformation([FromForm] UserUpdateDto userUpdateDto, string userId)
             => ProcessResult(await _userService.UpdateUserInformationAsync(userUpdateDto, userId));
 
         [HttpPut("uploadprofilepic/{userId}")]

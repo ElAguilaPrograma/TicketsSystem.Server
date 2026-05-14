@@ -24,11 +24,12 @@ public static class UserMappers
         CreatedAt = user.CreatedAt
     };
 
-    public static CurrentUserDto ToCurrentUserDto(this User user, string? email, string? role) => new()
+    public static CurrentUserDto ToCurrentUserDto(this User user, string? email, string? role, string? profilePicUrl) => new()
     {
         UserId = user.UserId,
         Email = email,
         Role = role,
-        FullName = user.FullName
+        FullName = user.FullName,
+        ProfilePicUrl = profilePicUrl
     };
 }

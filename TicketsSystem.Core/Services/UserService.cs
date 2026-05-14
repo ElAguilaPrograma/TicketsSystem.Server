@@ -268,7 +268,8 @@ namespace TicketsSystem.Core.Services
             var email = _currentUserService.GetCurrentUserEmail();
             var role = _currentUserService.GetCurrentUserRole();
             var user = await _userRepository.GetById(userId);
-            var currentUserClaimData = user!.ToCurrentUserDto(email, role);
+            var profilePicUrl = user?.ProfilePicUrl;
+            var currentUserClaimData = user!.ToCurrentUserDto(email, role, profilePicUrl);
 
             return Result.Ok(currentUserClaimData).WithSuccess(new OkSuccess("Current user retrieved successfully."));
         }
