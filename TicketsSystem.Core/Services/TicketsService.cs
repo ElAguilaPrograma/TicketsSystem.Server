@@ -1,7 +1,9 @@
 using ClosedXML.Excel;
 using FluentResults;
+using Microsoft.AspNetCore.Http;
 using TicketsSystem.Core.DTOs.NotificationDTO;
 using TicketsSystem.Core.DTOs.PaginationDTO;
+using TicketsSystem.Core.DTOs.TicketsAttachmentDTO;
 using TicketsSystem.Core.DTOs.TicketsDTO;
 using TicketsSystem.Core.Errors;
 using TicketsSystem.Core.Interfaces;
@@ -19,8 +21,10 @@ namespace TicketsSystem.Core.Services
         private readonly IGetUserRole _getUseRole;
         private readonly IUserRepository _userRepository;
         private readonly ITicketsHistoryRepository _ticketsHistoryRepository;
+        private readonly ITicketAttachmentService _ticketAttachmentService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly INotificationService _notificationService;
+        private readonly IStorageService _storageService;
 
         public TicketsService(ITicketsRepository ticketsRepository,
             ICurrentUserService currentUserService,
@@ -28,7 +32,9 @@ namespace TicketsSystem.Core.Services
             IUserRepository userRepository,
             ITicketsHistoryRepository ticketsHistoryRepository,
             IUnitOfWork unitOfWork,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IStorageService storageService, 
+            ITicketAttachmentService ticketAttachmentService)
         {
             _ticketsRepository = ticketsRepository;
             _currentUserService = currentUserService;
@@ -37,6 +43,8 @@ namespace TicketsSystem.Core.Services
             _ticketsHistoryRepository = ticketsHistoryRepository;
             _unitOfWork = unitOfWork;
             _notificationService = notificationService;
+            _storageService = storageService;
+            _ticketAttachmentService = ticketAttachmentService;
         }
 
         public async Task<Result<PagedResult<TicketsReadDto>>> GetAllTicketsWithFiltersAsync(GetAllTicketsFilterDto filterDto)
@@ -146,6 +154,30 @@ namespace TicketsSystem.Core.Services
                 ChangeGroupId = Guid.NewGuid(),
                 FieldName = "Ticket Created"
             };
+
+            if (ticketsCreateDto.Attachments != null && ticketsCreateDto.Attachments.Count > 0)
+            {
+                foreach (var attachment in ticketsCreateDto.Attachments)
+                {
+                    var uploadAttach = await _storageService.UploadAsync(nameof(StorageBucket.TicketAttachments), attachment);
+                    if (uploadAttach.IsSuccess)
+                    {
+                        var (url, path) = uploadAttach.Value;
+                        var attachmentCreateDto = new TicketsAttachmentCreateDto
+                        {
+                            TicketId = newTicket.TicketId,
+                            FileName = attachment.FileName,
+                            Path = path,
+                            FileUrl = url
+                        };
+                        await _ticketAttachmentService.AddTicketAttachmentAsync(newTicket.TicketId.ToString(), attachmentCreateDto);
+                    }
+                    else
+                    {
+                        return Result.Fail(new InternalServerError($"Failed to upload attachment"));
+                    }
+                }
+            }
 
             await _ticketsHistoryRepository.Create(newTicketHistory);
 
@@ -500,6 +532,5 @@ namespace TicketsSystem.Core.Services
                 return Result.Ok(stream.ToArray()).WithSuccess(new OkSuccess("Tickets exported successfully."));
             }
         }
-
     }
 }

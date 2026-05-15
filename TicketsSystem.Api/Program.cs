@@ -182,6 +182,7 @@ builder.Services.AddScoped<ITicketsRepository, TicketsRepository>();
 builder.Services.AddScoped<ITicketCommentsRepository, TicketCommentsRepository>();
 builder.Services.AddScoped<ITicketsHistoryRepository, TicketsHistoryRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<ITicketAttachmentRepository, TicketAttachmentRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -192,6 +193,7 @@ builder.Services.AddScoped<ITicketCommetsService, TicketCommentsService>();
 builder.Services.AddScoped<ITicketHistoryService, TicketHistoryService>();
 builder.Services.AddScoped<ITicketHubService, TicketHubService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ITicketAttachmentService, TicketAttachmentService>();
 builder.Services.AddScoped<IFileStorageProvider, SupabaseStorageProvider>();
 builder.Services.AddScoped<IStorageService, StorageService>();
 // Validations 

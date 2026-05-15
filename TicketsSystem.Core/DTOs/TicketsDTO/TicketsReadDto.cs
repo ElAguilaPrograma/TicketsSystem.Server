@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace TicketsSystem.Core.DTOs.TicketsDTO;
 
 public class TicketsReadDto
