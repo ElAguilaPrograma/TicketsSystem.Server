@@ -10,6 +10,7 @@ public static class TicketAttachmentMappers
         TicketAttachmentId = attachment.TicketAttachmentId,
         FileName = attachment.FileName,
         FileUrl = attachment.FileUrl,
+        FilePath = attachment.Path,
         CreatedAt = attachment.CreatedAt
     };
 }

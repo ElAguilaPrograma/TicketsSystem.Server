@@ -5,6 +5,7 @@ namespace TicketsSystem.Core.DTOs.TicketsAttachmentDTO
         public Guid TicketAttachmentId { get; set; }
         public string FileName { get; set; } = string.Empty;
         public string FileUrl { get; set; } = string.Empty;
+        public string FilePath { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
     }
 }
