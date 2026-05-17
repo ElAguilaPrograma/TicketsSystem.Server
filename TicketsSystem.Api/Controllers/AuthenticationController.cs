@@ -59,6 +59,19 @@ namespace TicketsSystem.Api.Controllers
         public async Task<IActionResult> UploadProfilePic(IFormFile file, string userId)
             => ProcessResult(await _userService.UploadAProfilePicAsync(file, userId, true));
 
+        [HttpGet("getprofilepic/{userId}")]
+        [Authorize]
+        public async Task<IActionResult> GetUserProfilePicUrl(string userId)
+        {
+            var result = await _userService.GetUserProfilePicUrlAsync(userId);
+            if (result.IsFailed)
+            {
+                return ProcessResult(result);
+            }
+
+            return Ok(new { url = result.Value });
+        }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {

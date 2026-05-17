@@ -48,6 +48,12 @@ public class UserRepository : GenericRepository<User>, IUserRepository
         return (users, totalCount);
     }
 
+    public async Task<string?> GetUserProfilePicPath(Guid userId)
+    {
+        var user = await _users.FirstOrDefaultAsync(u => u.UserId == userId);
+        return user?.ProfilePicPath;
+    }
+
     public async Task<IEnumerable<User>> ExportUsersWithFilters(string? role = null, bool? isActive = null)
     {
         var query = _users.AsQueryable();

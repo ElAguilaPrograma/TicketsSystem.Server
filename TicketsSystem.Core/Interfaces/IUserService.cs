@@ -17,5 +17,6 @@ namespace TicketsSystem.Core.Interfaces
         Task<Result<LoginSuccessDto>> LoginAsync(LoginRequest request);
         Task<Result> UpdateUserInformationAsync(UserUpdateDto userUpdateDto, string userIdStr);
         Task<Result> UploadAProfilePicAsync(IFormFile file, string userIdStr, bool update = true);
+        Task<Result<string>> GetUserProfilePicUrlAsync(string userIdStr);
     }
 }

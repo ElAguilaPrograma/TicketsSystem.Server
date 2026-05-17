@@ -163,6 +163,25 @@ namespace TicketsSystem.Core.Services
             }).WithSuccess(new OkSuccess("Login successful."));
         }
 
+        public async Task<Result<string>> GetUserProfilePicUrlAsync(string userIdStr)
+        {
+            Guid userId = Guid.Parse(userIdStr);
+            var userProfilePicPath = await _userRepository.GetUserProfilePicPath(userId);
+
+            if (userProfilePicPath == null)
+                return Result.Fail(new NotFoundError("The user does not exist"));
+
+            if (userProfilePicPath == null)
+                return Result.Fail(new NotFoundError("The user does not have a profile picture"));
+
+            var result = await _storageService.GetUrlAsync(nameof(StorageBucket.ProfilePics), userProfilePicPath);
+
+            if (result.IsFailed)
+                return Result.Fail(new InternalServerError("There was a problem retrieving the profile picture URL."));
+
+            return Result.Ok(result.Value).WithSuccess(new OkSuccess("Profile picture URL retrieved successfully."));
+        }
+
         public async Task<Result> UpdateUserInformationAsync(UserUpdateDto userUpdateDto, string userIdStr)
         {
             Guid userId = Guid.Parse(userIdStr);
