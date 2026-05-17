@@ -24,8 +24,8 @@ namespace TicketsSystem.Api.Controllers
 
         [HttpPost("addattachment/{ticketId}")]
         [Authorize]
-        public async Task<IActionResult> AddTicketAttachment(string ticketId, TicketsAttachmentCreateDto ticketsAttachmentCreateDto)
-            => ProcessResult(await _ticketAttachmentService.AddTicketAttachmentAsync(ticketId, ticketsAttachmentCreateDto));
+        public async Task<IActionResult> AddTicketAttachment(string ticketId, IFormFile file)
+            => ProcessResult(await _ticketAttachmentService.AddTicketAttachmentAsync(ticketId, file));
 
         [HttpDelete("deleteattachment/{ticketId}/{attachmentId}")]
         [Authorize]

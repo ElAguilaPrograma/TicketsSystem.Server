@@ -159,22 +159,10 @@ namespace TicketsSystem.Core.Services
             {
                 foreach (var attachment in ticketsCreateDto.Attachments)
                 {
-                    var uploadAttach = await _storageService.UploadAsync(nameof(StorageBucket.TicketAttachments), attachment);
-                    if (uploadAttach.IsSuccess)
+                    var createAttachmentResult = await _ticketAttachmentService.AddTicketAttachmentAsync(newTicket.TicketId.ToString(), attachment, false);
+                    if (createAttachmentResult.IsFailed)
                     {
-                        var (url, path) = uploadAttach.Value;
-                        var attachmentCreateDto = new TicketsAttachmentCreateDto
-                        {
-                            TicketId = newTicket.TicketId,
-                            FileName = attachment.FileName,
-                            Path = path,
-                            FileUrl = url
-                        };
-                        await _ticketAttachmentService.AddTicketAttachmentAsync(newTicket.TicketId.ToString(), attachmentCreateDto);
-                    }
-                    else
-                    {
-                        return Result.Fail(new InternalServerError($"Failed to upload attachment"));
+                        continue;
                     }
                 }
             }

@@ -149,7 +149,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 builder.Services.AddSingleton(sp =>
 {
     var storageUrl = builder.Configuration["Supabase:Url"];
-    var key = builder.Configuration["Supabase:key"];
+    var key = builder.Configuration["Supabase:Key"];
+
+    if (string.IsNullOrWhiteSpace(storageUrl) || string.IsNullOrWhiteSpace(key))
+        throw new InvalidOperationException("Supabase configuration is missing. Set Supabase:Url and Supabase:Key in appsettings.");
 
     return new Client(storageUrl, new Dictionary<string, string>
     {

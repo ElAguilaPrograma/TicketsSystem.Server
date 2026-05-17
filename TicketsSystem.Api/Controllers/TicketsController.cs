@@ -38,7 +38,7 @@ namespace TicketsSystem.Api.Controllers
 
         [HttpPost("createticket")]
         [Authorize]
-        public async Task<IActionResult> CreateTicket([FromBody] TicketsCreateDto ticketsCreateDto)
+        public async Task<IActionResult> CreateTicket([FromForm] TicketsCreateDto ticketsCreateDto)
             => ProcessResult(await _ticketsService.CreateATicketAsync(ticketsCreateDto));
 
         [HttpPut("updateticketinfo/{ticketId}")]

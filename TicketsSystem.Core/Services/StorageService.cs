@@ -1,5 +1,6 @@
 using FluentResults;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.Logging;
 using Supabase.Storage.Exceptions;
 using TicketsSystem.Core.Errors;
@@ -20,7 +21,7 @@ namespace TicketsSystem.Core.Services
             _logger = logger;
         }
 
-        public async Task<Result<(string Url, string Path)>> UploadAsync(string bucketName, IFormFile file)
+        public async Task<Result<(string Path, string fileName)>> UploadAsync(string bucketName, IFormFile file)
         {
             try
             {
@@ -29,16 +30,15 @@ namespace TicketsSystem.Core.Services
                 if (!FilesValidatorHelper.IsValidSize(file))
                     return Result.Fail(new PayloadTooLargeError("The file is too large, 25MB limit."));
 
-                if (!FilesValidatorHelper.IsValidImage(file))
-                    return Result.Fail(new UnsupportedMediaTypeError("Invalid file format, only images are accepted."));
+                if (!FilesValidatorHelper.IsValidBusinessFile(file))
+                    return Result.Fail(new UnsupportedMediaTypeError("Invalid file format. Allowed: images, pdf, doc/docx, ppt/pptx, xls/xlsx, txt, csv, rtf."));
 
                 var data = await ReadFileBytesAsync(file);
                 var fileName = $"{Guid.NewGuid()}_{file.FileName}";
 
-                var (url, path) = await _storageProvider.UploadAsync(bucketName, fileName, data, file.ContentType);
+                var path = await _storageProvider.UploadAsync(bucketName, fileName, data, file.ContentType);
 
-                _logger.LogDebug("File uploaded successfully to '{Url}'", url);
-                return Result.Ok((url, path)).WithSuccess(new OkSuccess("File uploaded successfully."));
+                return Result.Ok((path, fileName)).WithSuccess(new OkSuccess("File uploaded successfully."));
             }
             catch (SupabaseStorageException ex)
             {
@@ -52,7 +52,7 @@ namespace TicketsSystem.Core.Services
             }
         }
 
-        public async Task<Result<(string Url, string Path)>> UpdateFileAsync(string bucketName, string supabasePath, IFormFile file)
+        public async Task<Result<string>> UpdateFileAsync(string bucketName, string supabasePath, IFormFile file)
         {
             try
             {
@@ -61,8 +61,8 @@ namespace TicketsSystem.Core.Services
                 if (!FilesValidatorHelper.IsValidSize(file))
                     return Result.Fail(new PayloadTooLargeError("The file is too large, 25MB limit."));
 
-                if (!FilesValidatorHelper.IsValidImage(file))
-                    return Result.Fail(new UnsupportedMediaTypeError("Invalid file format, only images are accepted."));
+                if (!FilesValidatorHelper.IsValidBusinessFile(file))
+                    return Result.Fail(new UnsupportedMediaTypeError("Invalid file format. Allowed: images, pdf, doc/docx, ppt/pptx, xls/xlsx, txt, csv, rtf."));
 
                 var exists = await _storageProvider.ExistsAsync(bucketName, supabasePath);
                 if (!exists)
@@ -72,10 +72,10 @@ namespace TicketsSystem.Core.Services
                 }
 
                 var data = await ReadFileBytesAsync(file);
-                var (url, path) = await _storageProvider.UpdateAsync(bucketName, supabasePath, data, file.ContentType);
+                var path = await _storageProvider.UpdateAsync(bucketName, supabasePath, data, file.ContentType);
 
-                _logger.LogDebug("File updated successfully at '{Url}'", url);
-                return Result.Ok((url, path)).WithSuccess(new OkSuccess("File updated successfully."));
+                _logger.LogDebug("File updated successfully at '{Path}'", path);
+                return Result.Ok(path).WithSuccess(new OkSuccess("File updated successfully."));
             }
             catch (SupabaseStorageException ex)
             {
@@ -124,6 +124,35 @@ namespace TicketsSystem.Core.Services
             using var stream = new MemoryStream();
             await file.CopyToAsync(stream);
             return stream.ToArray();
+        }
+
+        public async Task<Result<string>> GetUrlAsync(string bucketName, string path)
+        {
+            var url = string.Empty;
+            try
+            {
+                url = await _storageProvider.GetUrl(bucketName, path);
+            }
+            catch (SupabaseStorageException ex)
+            {
+                _logger.LogError(ex, "Supabase storage exception during URL retrieval from bucket '{BucketName}' at path '{Path}'", bucketName, path);
+                return Result.Fail(new InternalServerError("An error occurred while trying to retrieve the file URL."));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during URL retrieval from bucket '{BucketName}' at path '{Path}'", bucketName, path);
+                return Result.Fail(new InternalServerError("An error occurred while trying to retrieve the file URL."));
+            }
+            url = NormalizeSignedUrl(url);
+            return Result.Ok(url);
+        }
+
+        private static string NormalizeSignedUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return url;
+
+            return url.TrimEnd('?', '&');
         }
     }
 }

@@ -57,7 +57,7 @@ namespace TicketsSystem.Api.Controllers
         [HttpPut("uploadprofilepic/{userId}")]
         [Authorize]
         public async Task<IActionResult> UploadProfilePic(IFormFile file, string userId)
-            => ProcessResult(await _userService.UploadAProfilePicAsync(file, userId));
+            => ProcessResult(await _userService.UploadAProfilePicAsync(file, userId, true));
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
@@ -77,7 +77,7 @@ namespace TicketsSystem.Api.Controllers
                     Expires = loginData.Expiration
                 };
 
-                Response.Cookies.Append("AuthToken", loginData.Token, cookieOptions);
+                Response.Cookies.Append("AuthToken", loginData.Token!, cookieOptions);
 
                 return Ok(new { message = "Login Successful" });
             }
@@ -109,13 +109,13 @@ namespace TicketsSystem.Api.Controllers
         public async Task<IActionResult> DeactivateAUser(string userId)
             => ProcessResult(await _userService.DeactivateOrActivateAUserAsync(userId));
 
-
         [HttpGet("getuserscount")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetUsersCount()
             => ProcessResult(await _userService.GetUsersCount());
 
         [HttpGet("exportusers")]
+        [Authorize]
         public async Task<IActionResult> ExportUsers([FromQuery] FilterUsersDto filterUsersDto)
         {
             var result = await _userService.ExportUsersAsync(filterUsersDto);

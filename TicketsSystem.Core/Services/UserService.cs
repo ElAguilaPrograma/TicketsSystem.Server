@@ -119,8 +119,8 @@ namespace TicketsSystem.Core.Services
                 var uploadResult = await _storageService.UploadAsync(nameof(StorageBucket.ProfilePics), userCreateDto.ProfilePic);
                 if (uploadResult.IsSuccess)
                 {
-                    var (url, path) = uploadResult.Value;
-                    newUser.ProfilePicUrl = url;
+                    var (path, fileName) = uploadResult.Value;
+                    newUser.ProfilePicUrl = string.Empty; // La URL se generará dinámicamente al solicitarla, usando el path y el bucket.
                     newUser.ProfilePicPath = path;
                 }
                 else
@@ -268,7 +268,13 @@ namespace TicketsSystem.Core.Services
             var email = _currentUserService.GetCurrentUserEmail();
             var role = _currentUserService.GetCurrentUserRole();
             var user = await _userRepository.GetById(userId);
-            var profilePicUrl = user?.ProfilePicUrl;
+            var profilePicUrl = "";
+            if (user?.ProfilePicPath != null)
+            {
+                var result = await _storageService.GetUrlAsync(nameof(StorageBucket.ProfilePics), user.ProfilePicPath);
+                if (result.IsSuccess)
+                    profilePicUrl = result.Value;
+            }
             var currentUserClaimData = user!.ToCurrentUserDto(email, role, profilePicUrl);
 
             return Result.Ok(currentUserClaimData).WithSuccess(new OkSuccess("Current user retrieved successfully."));
@@ -358,16 +364,28 @@ namespace TicketsSystem.Core.Services
                 if (targetUser == null)
                     return Result.Fail(new NotFoundError("The user was not found"));
 
-                var result = await (targetUser.ProfilePicUrl != null && targetUser.ProfilePicPath != null
-                    ? _storageService.UpdateFileAsync(nameof(StorageBucket.ProfilePics), targetUser.ProfilePicPath, file)
-                    : _storageService.UploadAsync(nameof(StorageBucket.ProfilePics), file));
+                string path;
 
-                if (result.IsFailed)
-                    return Result.Fail(new InternalServerError("The upload operation failed"));
+                if (targetUser.ProfilePicUrl != null && targetUser.ProfilePicPath != null)
+                {
+                    var updateResult = await _storageService.UpdateFileAsync(nameof(StorageBucket.ProfilePics), targetUser.ProfilePicPath, file);
 
-                var (url, path) = result.Value;
+                    if (updateResult.IsFailed)
+                        return Result.Fail(new InternalServerError("The upload operation failed"));
 
-                targetUser.ProfilePicUrl = url;
+                    path = updateResult.Value;
+                }
+                else
+                {
+                    var uploadResult = await _storageService.UploadAsync(nameof(StorageBucket.ProfilePics), file);
+
+                    if (uploadResult.IsFailed)
+                        return Result.Fail(new InternalServerError("The upload operation failed"));
+
+                    (path, _) = uploadResult.Value;
+                }
+
+                targetUser.ProfilePicUrl = string.Empty; // La URL se generará dinámicamente al solicitarla, usando el path y el bucket.
                 targetUser.ProfilePicPath = path;
 
                 if (update)

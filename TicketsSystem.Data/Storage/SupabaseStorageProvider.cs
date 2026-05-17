@@ -11,17 +11,22 @@ namespace TicketsSystem.Data.Storage
             _storage = storage;
         }
 
-        public async Task<(string Url, string Path)> UploadAsync(string bucketName, string fileName, byte[] data, string contentType)
+        public async Task<string> UploadAsync(string bucketName, string fileName, byte[] data, string contentType)
         {
             var bucket = _storage.From(bucketName);
             await bucket.Upload(data, fileName);
 
-            var url = await bucket.CreateSignedUrl(fileName, 604800);
-
-            return (url, fileName);
+            return (fileName);
         }
 
-        public async Task<(string Url, string Path)> UpdateAsync(string bucketName, string path, byte[] data, string contentType)
+        public async Task<string> GetUrl(string bucketName, string path)
+        {
+            var bucket = _storage.From(bucketName);
+            var url = await bucket.CreateSignedUrl(path, 300); // URL válida por 5 minutos
+            return url;
+        }
+
+        public async Task<string> UpdateAsync(string bucketName, string path, byte[] data, string contentType)
         {
             var bucket = _storage.From(bucketName);
 
@@ -33,9 +38,7 @@ namespace TicketsSystem.Data.Storage
 
             await bucket.Update(data, path, options);
 
-            var url = await bucket.CreateSignedUrl(path, 604800);
-
-            return (url, path);
+            return path;
         }
 
         public async Task DeleteAsync(string bucketName, string path)
