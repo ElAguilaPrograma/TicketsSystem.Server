@@ -21,7 +21,12 @@ namespace TicketsSystem.Api.Controllers
         public async Task<IActionResult> GetFileUrl(string bucketName, string path)
         {
             var result = await _storageService.GetUrlAsync(bucketName, path);
-            return ProcessResult(result);
+            if (result.IsFailed)
+            {
+                return ProcessResult(result);
+            }
+
+            return Ok(new { url = result.Value });
         }
 
     }

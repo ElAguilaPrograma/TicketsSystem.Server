@@ -21,6 +21,7 @@ public static class UserMappers
         Email = user.Email,
         Role = user.Role,
         IsActive = user.IsActive,
+        ProfilePicPath = user.ProfilePicPath,
         CreatedAt = user.CreatedAt
     };
 

@@ -22,7 +22,7 @@ namespace TicketsSystem.Data.Storage
         public async Task<string> GetUrl(string bucketName, string path)
         {
             var bucket = _storage.From(bucketName);
-            var url = await bucket.CreateSignedUrl(path, 300); // URL válida por 5 minutos
+            var url = await bucket.CreateSignedUrl(path, 150); // URL válida por 5 minutos
             return url;
         }
 
