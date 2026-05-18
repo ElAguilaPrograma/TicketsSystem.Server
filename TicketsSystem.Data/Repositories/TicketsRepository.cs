@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TicketsSystem.Domain.Entities;
+using TicketsSystem.Domain.Enums;
 using TicketsSystem.Domain.Interfaces;
 
 namespace TicketsSystem.Data.Repositories;
@@ -170,5 +171,45 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
     {
         var today = DateTime.UtcNow.Date;
         return await _tickets.CountAsync(t => t.CreatedAt.Date == today);
+    }
+
+    public async Task<IEnumerable<Ticket>> GetSimilarTicketsAsync(Guid excludeTicketId, string[] keywords, int take = 10)
+    {
+        if (keywords == null || keywords.Length == 0)
+            return [];
+
+        var query = _tickets
+            .Include(t => t.Status)
+            .Include(t => t.Priority)
+            .Include(t => t.AssignedToUser)
+            .Include(t => t.CreatedByUser)
+            .Where(t => t.TicketId != excludeTicketId);
+
+        foreach (var keyword in keywords)
+        {
+            var term = keyword.ToLower();
+            query = query.Where(t =>
+                EF.Functions.ILike(t.Title, $"%{term}%") ||
+                EF.Functions.ILike(t.Description, $"%{term}%"));
+        }
+
+        return await query
+            .OrderByDescending(t => t.CreatedAt)
+            .Take(take)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Ticket>> GetAgingTicketsAsync(int olderThanDays)
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-olderThanDays);
+
+        return await _tickets
+            .Include(t => t.Status)
+            .Include(t => t.Priority)
+            .Include(t => t.AssignedToUser)
+            .Include(t => t.CreatedByUser)
+            .Where(t => t.StatusId != (int)TicketsStatusValue.Closed && t.CreatedAt <= cutoff)
+            .OrderBy(t => t.CreatedAt)
+            .ToListAsync();
     }
 }

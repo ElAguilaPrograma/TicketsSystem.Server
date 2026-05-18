@@ -49,7 +49,7 @@ public partial class SystemTicketsContext : DbContext
 
             entity.HasOne(d => d.Ticket).WithMany(p => p.Mcprequests)
                 .HasForeignKey(d => d.TicketId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_MCPRequest_Ticket");
         });
 

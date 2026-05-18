@@ -8,6 +8,7 @@ using TicketsSystem.Core.Services;
 using TicketsSystem.Domain.Entities;
 using TicketsSystem.Domain.Enums;
 using TicketsSystem.Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
 
 namespace TicketsSystem.Tests.Services;
 
@@ -20,6 +21,8 @@ public class TicketsServiceTests
     private readonly Mock<ITicketsHistoryRepository> _ticketsHistoryRepository = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<INotificationService> _notificationService = new();
+    private readonly Mock<IStorageService> _storageService = new();
+    private readonly Mock<ITicketAttachmentService> _ticketAttachmentService = new();
 
     private TicketsService BuildSut()
     {
@@ -30,7 +33,9 @@ public class TicketsServiceTests
             _userRepository.Object,
             _ticketsHistoryRepository.Object,
             _unitOfWork.Object,
-            _notificationService.Object);
+            _notificationService.Object,
+            _storageService.Object,
+            _ticketAttachmentService.Object);
     }
 
     [Fact]

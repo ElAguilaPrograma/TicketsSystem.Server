@@ -12,4 +12,6 @@ public interface ITicketsRepository : IGenericRepository<Ticket>
     Task<IEnumerable<Ticket>> ExportTicketsWithFilters(string? status = null, string? priority = null, string? querySearch = null, int? month = null, int? year = null, Guid? userId = null, bool? hasAssignment = null, Guid? assignedToUserId = null);
     Task<Dictionary<int, int>> GetTicketsCountSummary(Guid userId, string userRole);
     Task<int> GetTodaysTicketsCount();
+    Task<IEnumerable<Ticket>> GetSimilarTicketsAsync(Guid excludeTicketId, string[] keywords, int take = 10);
+    Task<IEnumerable<Ticket>> GetAgingTicketsAsync(int olderThanDays);
 }

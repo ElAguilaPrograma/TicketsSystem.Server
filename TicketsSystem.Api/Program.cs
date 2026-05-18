@@ -13,6 +13,7 @@ using TicketsSystem.Core.DTOs.TicketsDTO;
 using TicketsSystem.Core.DTOs.UserDTO;
 using TicketsSystem.Core.Interfaces;
 using TicketsSystem.Core.Services;
+using TicketsSystem.Core.Services.AiProviders;
 using TicketsSystem.Core.Validations.TicketsValidations;
 using TicketsSystem.Core.Validations.UserValidations;
 using TicketsSystem.Data;
@@ -199,6 +200,23 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ITicketAttachmentService, TicketAttachmentService>();
 builder.Services.AddScoped<IFileStorageProvider, SupabaseStorageProvider>();
 builder.Services.AddScoped<IStorageService, StorageService>();
+// MCP Services
+builder.Services.AddScoped<IMcpService, McpService>();
+builder.Services.AddScoped<IGenericRepository<Mcprequest>, GenericRepository<Mcprequest>>();
+builder.Services.AddScoped<IGenericRepository<Mcpresponse>, GenericRepository<Mcpresponse>>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IMcpAiProvider>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var logger = sp.GetRequiredService<ILogger<OpenAiProvider>>();
+    var configuration = sp.GetRequiredService<IConfiguration>();
+
+    var apiKey = configuration["AiProvider:ApiKey"] ?? "";
+    var endpoint = configuration["AiProvider:Endpoint"] ?? "https://api.openai.com/v1/chat/completions";
+    var model = configuration["AiProvider:Model"] ?? "gpt-4o-mini";
+
+    return new OpenAiProvider(httpClientFactory, logger, apiKey, endpoint, model);
+});
 // Validations 
 builder.Services.AddTransient<IValidator<UserCreateDto>, UserCreateValidator>();
 builder.Services.AddTransient<IValidator<UserUpdateDto>, UserUpdateValidator>();
