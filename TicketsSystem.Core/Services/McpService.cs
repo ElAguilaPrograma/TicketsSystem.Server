@@ -63,36 +63,36 @@ public class McpService : IMcpService
         var similarTickets = await _ticketsRepository.GetSimilarTicketsAsync(ticketId, keywords);
 
         var systemPrompt = """
-            Eres un analista de tickets de soporte técnico. Analiza el ticket proporcionado y genera:
-            1. Un resumen claro y conciso del problema (en español)
-            2. Posibles soluciones o pasos a seguir
+            You are a technical support ticket analyst. Analyze the provided ticket and generate:
+            1. A clear and concise summary of the problem (in English)
+            2. Possible solutions or steps to follow
 
-            Responde ÚNICAMENTE con un objeto JSON válido en el siguiente formato, sin texto adicional:
+            Respond ONLY with a valid JSON object in the following format, without additional text:
             {
-              "summary": "Resumen del problema aquí",
-              "solutions": ["Solución 1", "Solución 2", "Solución 3"]
+              "summary": "Summary of the problem here",
+              "solutions": ["Solution 1", "Solution 2", "Solution 3"]
             }
             """;
 
         var commentsText = comments.Any()
             ? string.Join("\n", comments.Select(c => $"- [{c.CreatedAt:yyyy-MM-dd}] {c.Content}"))
-            : "No hay comentarios.";
+            : "No comments available.";
 
         var userPrompt = $"""
-            Título: {ticket.Title}
-            Descripción: {ticket.Description}
-            Estado: {ticket.Status.Name}
-            Prioridad: {ticket.Priority.Name}
-            Creado por: {ticket.CreatedByUser.FullName}
-            Asignado a: {ticket.AssignedToUser?.FullName ?? "Sin asignar"}
-            Fecha de creación: {ticket.CreatedAt:yyyy-MM-dd HH:mm}
+            Title: {ticket.Title}
+            Description: {ticket.Description}
+            Status: {ticket.Status.Name}
+            Priority: {ticket.Priority.Name}
+            Created by: {ticket.CreatedByUser.FullName}
+            Assigned to: {ticket.AssignedToUser?.FullName ?? "Not assigned"}
+            Creation date: {ticket.CreatedAt:yyyy-MM-dd HH:mm}
 
-            Comentarios del ticket:
+            Ticket comments:
             {commentsText}
 
-            Adjuntos: {attachments.Count()} archivo(s)
+            Attachments: {attachments.Count()} file(s)
 
-            Tickets similares encontrados: {similarTickets.Count()}
+            Similar tickets found: {similarTickets.Count()}
             """;
 
         var aiRequest = new McpAiRequest

@@ -17,6 +17,7 @@ using TicketsSystem.Core.Services.AiProviders;
 using TicketsSystem.Core.Validations.TicketsValidations;
 using TicketsSystem.Core.Validations.UserValidations;
 using TicketsSystem.Data;
+using TicketsSystem.Data.Seed;
 using TicketsSystem.Data.Repositories;
 using TicketsSystem.Data.Storage;
 using TicketsSystem.Domain.Entities;
@@ -247,94 +248,8 @@ using (var scope = app.Services.CreateScope())
         dbContext.Database.Migrate();
     }
 
-    if (!dbContext.Users.Any())
-    {
-        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
-        var adminUser = new User
-        {
-            UserId = Guid.NewGuid(),
-            FullName = "Administrator",
-            Email = "admin@example.com",
-            Role = "Admin",
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, "Admin123!");
-        dbContext.Users.Add(adminUser);
-        dbContext.SaveChanges();
-        logger.LogInformation("Default admin user created successfully. It is recommended to change the email and password.");
-    }
-
-    if (!dbContext.TicketStatuses.Any())
-    {
-        var openStatus = new TicketStatus
-        {
-            Name = "Open"
-        };
-
-        var inProgressStatus = new TicketStatus
-        {
-            Name = "In Progress"
-        };
-
-        var onHoldStatus = new TicketStatus
-        {
-            Name = "On Hold"
-        };
-
-        var closedStatus = new TicketStatus
-        {
-            Name = "Closed"
-        };
-
-        var reopenedStatus = new TicketStatus
-        {
-            Name = "Reopened"
-        };
-
-        dbContext.TicketStatuses.Add(openStatus);
-        dbContext.TicketStatuses.Add(inProgressStatus);
-        dbContext.TicketStatuses.Add(onHoldStatus);
-        dbContext.TicketStatuses.Add(closedStatus);
-        dbContext.TicketStatuses.Add(reopenedStatus);
-        dbContext.SaveChanges();
-        logger.LogInformation("Default ticket statuses created successfully.");
-    }
-
-    if (!dbContext.TicketPriorities.Any())
-    {
-        var lowPriority = new TicketPriority
-        {
-            Name = "Low",
-            Level = 1
-        };
-
-        var mediumPriority = new TicketPriority
-        {
-            Name = "Medium",
-            Level = 2
-        };
-
-        var highPriority = new TicketPriority
-        {
-            Name = "High",
-            Level = 3
-        };
-
-        var criticalPriority = new TicketPriority
-        {
-            Name = "Critical",
-            Level = 4
-        };
-
-        dbContext.TicketPriorities.Add(lowPriority);
-        dbContext.TicketPriorities.Add(mediumPriority);
-        dbContext.TicketPriorities.Add(highPriority);
-        dbContext.TicketPriorities.Add(criticalPriority);
-        dbContext.SaveChanges();
-        logger.LogInformation("Default ticket priorities created successfully.");
-    }
+    var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
+    await SeedData.SeedAsync(dbContext, passwordHasher, logger);
 }
 
 // Configure the HTTP request pipeline.
