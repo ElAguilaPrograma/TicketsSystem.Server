@@ -126,14 +126,14 @@ public static class SeedData
         {
             var user = new User
             {
-                FullName = faker.Name.FullName(),
-                IsActive = faker.Random.Bool(0.9f),
+                FullName = i == 0 ? "Admin Test" : faker.Name.FullName(),
+                IsActive = i == 0 || faker.Random.Bool(0.9f),
                 CreatedAt = faker.Date.Between(DateTime.UtcNow.AddDays(-60), DateTime.UtcNow)
             };
 
             var firstName = user.FullName.Split(' ')[0].ToLower();
             var lastName = user.FullName.Split(' ').Last().ToLower();
-            user.Email = faker.Internet.Email(firstName, lastName).ToLower();
+            user.Email = i == 0 ? "admin@test.com" : faker.Internet.Email(firstName, lastName).ToLower();
             user.Role = i == 0 ? "Admin" : i <= 5 ? "Agent" : "User";
             user.PasswordHash = passwordHasher.HashPassword(user, "Password123!");
 

@@ -1,6 +1,7 @@
 using ClosedXML.Excel;
 using FluentResults;
 using Microsoft.AspNetCore.Http;
+using TicketsSystem.Core.DTOs.DashboardDTO;
 using TicketsSystem.Core.DTOs.NotificationDTO;
 using TicketsSystem.Core.DTOs.PaginationDTO;
 using TicketsSystem.Core.DTOs.TicketsAttachmentDTO;
@@ -440,6 +441,56 @@ namespace TicketsSystem.Core.Services
                 TicketsClosed = counts.GetValueOrDefault((int)TicketsStatusValue.Closed),
                 TicketsReopen = counts.GetValueOrDefault((int)TicketsStatusValue.Reopened)
             };
+        }
+
+        public async Task<Result<DashboardSummaryDto>> GetDashboardSummaryAsync(DashboardFilterDto filterDto)
+        {
+            Guid? filterByUserId = null;
+            Guid? filterByAssignedToUserId = null;
+
+            if (!filterDto.CurrentUserOnly && _currentUserService.GetCurrentUserRole() == "User")
+                return Result.Fail(new ForbiddenError("You are not authorized to perform this action."));
+            if (filterDto.AssignedToMeOnly && _currentUserService.GetCurrentUserRole() == "User")
+                return Result.Fail(new ForbiddenError("You are not authorized to perform this action."));
+
+            if (filterDto.CurrentUserOnly)
+                filterByUserId = _currentUserService.GetCurrentUserId();
+            if (filterDto.AssignedToMeOnly)
+                filterByAssignedToUserId = _currentUserService.GetCurrentUserId();
+
+            var statusCounts = await _ticketsRepository.GetTicketsCountByStatus(filterDto.FromDate, filterDto.ToDate, filterByUserId, filterByAssignedToUserId);
+            var priorityCounts = await _ticketsRepository.GetTicketsCountByPriority(filterDto.FromDate, filterDto.ToDate, filterByUserId, filterByAssignedToUserId);
+            var avgResolutionHours = await _ticketsRepository.GetAverageResolutionHours(filterDto.FromDate, filterDto.ToDate, filterByUserId, filterByAssignedToUserId);
+            var recentTickets = await _ticketsRepository.GetRecentTickets(filterDto.RecentTicketsTake, filterDto.FromDate, filterDto.ToDate, filterByUserId, filterByAssignedToUserId);
+            var resolvedToday = await _ticketsRepository.GetResolvedTodayCount(filterByUserId, filterByAssignedToUserId);
+
+            var totalTickets = statusCounts.Values.Sum();
+            var openTickets = statusCounts.GetValueOrDefault("Open");
+            var inProgressTickets = statusCounts.GetValueOrDefault("In Progress");
+            var closedTickets = statusCounts.GetValueOrDefault("Closed");
+
+            var summary = new DashboardSummaryDto
+            {
+                TotalTickets = totalTickets,
+                OpenTickets = openTickets,
+                InProgressTickets = inProgressTickets,
+                ClosedTickets = closedTickets,
+                ResolvedToday = resolvedToday,
+                AvgResolutionHours = Math.Round(avgResolutionHours, 2),
+                TicketsByStatus = statusCounts,
+                TicketsByPriority = priorityCounts,
+                RecentTickets = recentTickets.Select(t => new DashboardRecentTicketDto
+                {
+                    TicketId = t.TicketId,
+                    Title = t.Title,
+                    CreatedByUser = t.CreatedByUser.FullName,
+                    PriorityName = t.Priority.Name,
+                    StatusName = t.Status.Name,
+                    CreatedAt = t.CreatedAt
+                })
+            };
+
+            return Result.Ok(summary).WithSuccess(new OkSuccess("Dashboard summary loaded successfully."));
         }
 
         public async Task<Result<int>> GetTodaysTicketsCountAsync()

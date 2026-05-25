@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TicketsSystem.Core.DTOs.DashboardDTO;
 using TicketsSystem.Core.DTOs.TicketsDTO;
 using TicketsSystem.Core.Interfaces;
 
@@ -85,6 +86,11 @@ namespace TicketsSystem.Api.Controllers
         [Authorize]
         public async Task<IActionResult> GetTodaysTicketsCount()
             => ProcessResult(await _ticketsService.GetTodaysTicketsCountAsync());
+
+        [HttpGet("dashboard")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetDashboardSummary([FromQuery] DashboardFilterDto filterDto)
+            => ProcessResult(await _ticketsService.GetDashboardSummaryAsync(filterDto));
 
         [HttpGet("exporttickets")]
         [Authorize]

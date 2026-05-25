@@ -1,5 +1,6 @@
 using FluentResults;
 using Microsoft.AspNetCore.Mvc;
+using TicketsSystem.Core.DTOs.DashboardDTO;
 using TicketsSystem.Core.DTOs.PaginationDTO;
 using TicketsSystem.Core.DTOs.TicketsDTO;
 
@@ -18,6 +19,7 @@ namespace TicketsSystem.Core.Interfaces
         Task<Result<int>> GetTodaysTicketsCountAsync();
         Task<Result<TicketsReadDto>> GetTicketByIdAsync(string ticketIdStr);
         Task<Result<IEnumerable<TicketsReadDto>>> GetTicketsByUserIdAsync(string userIdStr);
+        Task<Result<DashboardSummaryDto>> GetDashboardSummaryAsync(DashboardFilterDto filterDto);
         Task<Result> ReopenTicketsAsync(string ticketIdStr);
         Task<Result> UpdateATicketInfoAsync(TicketsUpdateDto ticketsUpdateDto, string ticketIdStr);
         Task<Result> UpdateTicketUser([FromBody] TicketsUpdateDto ticketsUpdateDto, string ticketIdStr);

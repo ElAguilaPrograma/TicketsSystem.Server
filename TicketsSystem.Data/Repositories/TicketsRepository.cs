@@ -173,6 +173,119 @@ public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
         return await _tickets.CountAsync(t => t.CreatedAt.Date == today);
     }
 
+    public async Task<Dictionary<string, int>> GetTicketsCountByStatus(DateTime? fromDate, DateTime? toDate, Guid? userId, Guid? assignedToUserId)
+    {
+        var query = _tickets
+            .Include(t => t.Status)
+            .AsQueryable();
+
+        if (userId != null)
+            query = query.Where(t => t.CreatedByUserId == userId);
+        if (assignedToUserId != null)
+            query = query.Where(t => t.AssignedToUserId == assignedToUserId);
+        if (fromDate.HasValue)
+            query = query.Where(t => t.CreatedAt >= fromDate.Value);
+        if (toDate.HasValue)
+            query = query.Where(t => t.CreatedAt <= toDate.Value);
+
+        return await query
+            .GroupBy(t => t.Status.Name)
+            .Select(g => new { Name = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Name, x => x.Count);
+    }
+
+    public async Task<Dictionary<string, int>> GetTicketsCountByPriority(DateTime? fromDate, DateTime? toDate, Guid? userId, Guid? assignedToUserId)
+    {
+        var query = _tickets
+            .Include(t => t.Priority)
+            .AsQueryable();
+
+        if (userId != null)
+            query = query.Where(t => t.CreatedByUserId == userId);
+        if (assignedToUserId != null)
+            query = query.Where(t => t.AssignedToUserId == assignedToUserId);
+        if (fromDate.HasValue)
+            query = query.Where(t => t.CreatedAt >= fromDate.Value);
+        if (toDate.HasValue)
+            query = query.Where(t => t.CreatedAt <= toDate.Value);
+
+        return await query
+            .GroupBy(t => t.Priority.Name)
+            .Select(g => new { Name = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Name, x => x.Count);
+    }
+
+    public async Task<double> GetAverageResolutionHours(DateTime? fromDate, DateTime? toDate, Guid? userId, Guid? assignedToUserId)
+    {
+        var query = _tickets
+            .Where(t => t.ClosedAt != null)
+            .AsQueryable();
+
+        if (userId != null)
+            query = query.Where(t => t.CreatedByUserId == userId);
+        if (assignedToUserId != null)
+            query = query.Where(t => t.AssignedToUserId == assignedToUserId);
+        if (fromDate.HasValue)
+            query = query.Where(t => t.ClosedAt >= fromDate.Value);
+        if (toDate.HasValue)
+            query = query.Where(t => t.ClosedAt <= toDate.Value);
+
+        var durations = await query
+            .Select(t => new { t.CreatedAt, t.ClosedAt })
+            .ToListAsync();
+
+        if (durations.Count == 0)
+            return 0;
+
+        var avgSeconds = durations
+            .Where(t => t.ClosedAt.HasValue)
+            .Select(t => (t.ClosedAt!.Value - t.CreatedAt).TotalSeconds)
+            .DefaultIfEmpty(0)
+            .Average();
+
+        return avgSeconds / 3600.0;
+    }
+
+    public async Task<IEnumerable<Ticket>> GetRecentTickets(int take, DateTime? fromDate, DateTime? toDate, Guid? userId, Guid? assignedToUserId)
+    {
+        var query = _tickets
+            .Include(t => t.Status)
+            .Include(t => t.Priority)
+            .Include(t => t.CreatedByUser)
+            .AsQueryable();
+
+        if (userId != null)
+            query = query.Where(t => t.CreatedByUserId == userId);
+        if (assignedToUserId != null)
+            query = query.Where(t => t.AssignedToUserId == assignedToUserId);
+        if (fromDate.HasValue)
+            query = query.Where(t => t.CreatedAt >= fromDate.Value);
+        if (toDate.HasValue)
+            query = query.Where(t => t.CreatedAt <= toDate.Value);
+
+        return await query
+            .OrderByDescending(t => t.CreatedAt)
+            .Take(take)
+            .ToListAsync();
+    }
+
+    public async Task<int> GetResolvedTodayCount(Guid? userId, Guid? assignedToUserId)
+    {
+        var today = DateTime.UtcNow.Date;
+        var tomorrow = today.AddDays(1);
+
+        var query = _tickets
+            .Where(t => t.ClosedAt != null)
+            .AsQueryable();
+
+        if (userId != null)
+            query = query.Where(t => t.CreatedByUserId == userId);
+        if (assignedToUserId != null)
+            query = query.Where(t => t.AssignedToUserId == assignedToUserId);
+
+        return await query.CountAsync(t => t.ClosedAt >= today && t.ClosedAt < tomorrow);
+    }
+
     public async Task<IEnumerable<Ticket>> GetSimilarTicketsAsync(Guid excludeTicketId, string[] keywords, int take = 10)
     {
         if (keywords == null || keywords.Length == 0)
