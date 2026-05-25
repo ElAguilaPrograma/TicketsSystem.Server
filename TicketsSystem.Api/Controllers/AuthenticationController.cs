@@ -72,6 +72,11 @@ namespace TicketsSystem.Api.Controllers
             return Ok(new { url = result.Value });
         }
 
+        [HttpDelete("removeprofilepic/{userId}")]
+        [Authorize]
+        public async Task<IActionResult> RemoveProfilePic(string userId)
+            => ProcessResult(await _userService.RemoveProfilePicAsync(userId));
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {

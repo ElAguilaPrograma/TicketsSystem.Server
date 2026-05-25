@@ -169,9 +169,6 @@ namespace TicketsSystem.Core.Services
             var userProfilePicPath = await _userRepository.GetUserProfilePicPath(userId);
 
             if (userProfilePicPath == null)
-                return Result.Fail(new NotFoundError("The user does not exist"));
-
-            if (userProfilePicPath == null)
                 return Result.Fail(new NotFoundError("The user does not have a profile picture"));
 
             var result = await _storageService.GetUrlAsync(nameof(StorageBucket.ProfilePics), userProfilePicPath);
@@ -417,6 +414,37 @@ namespace TicketsSystem.Core.Services
             }
 
             return Result.Fail(new ForbiddenError("Only the owner user can change their profile photo."));
+        }
+
+        public async Task<Result> RemoveProfilePicAsync(string userIdStr)
+        {
+            if (string.IsNullOrWhiteSpace(userIdStr))
+                return Result.Fail(new BadRequestError("The user id is not valid"));
+
+            Guid userId = Guid.Parse(userIdStr);
+
+            if (_currentUserService.GetCurrentUserId() != userId && _currentUserService.GetCurrentUserRole() != "Admin")
+                return Result.Fail(new ForbiddenError("Only the owner user can change their profile photo."));
+
+            var targetUser = await _userRepository.GetById(userId);
+
+            if (targetUser == null)
+                return Result.Fail(new NotFoundError("The user was not found"));
+
+            if (!string.IsNullOrWhiteSpace(targetUser.ProfilePicPath))
+            {
+                var deleteResult = await _storageService.DeleteFileAsync(nameof(StorageBucket.ProfilePics), targetUser.ProfilePicPath);
+                if (deleteResult.IsFailed)
+                    return Result.Fail(deleteResult.Errors);
+            }
+
+            targetUser.ProfilePicUrl = null;
+            targetUser.ProfilePicPath = null;
+
+            _userRepository.Update(targetUser);
+            await _unitOfWork.SaveChangesAsync();
+
+            return Result.Ok().WithSuccess(new OkSuccess("Profile photo removed successfully."));
         }
     }
 }

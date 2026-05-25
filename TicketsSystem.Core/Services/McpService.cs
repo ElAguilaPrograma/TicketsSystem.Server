@@ -220,30 +220,30 @@ public class McpService : IMcpService
             .ToList();
 
         var systemPrompt = """
-            Eres un analista de soporte técnico senior. Revisa los datos de tickets proporcionados y genera un análisis en español que incluya:
-            1. Observaciones sobre tickets que llevan mucho tiempo abiertos
-            2. Patrones detectados de tickets repetitivos
-            3. Recomendaciones para mejorar la gestión
+            You are a senior technical support analyst. Review the provided ticket data and generate an analysis in English that includes:
+            1. Observations about tickets that have been open for a long time
+            2. Patterns detected in repetitive tickets
+            3. Recommendations for improving ticket management
 
-            Sé específico y menciona datos concretos. No uses JSON, responde en texto plano con formato markdown.
+            Be specific and mention concrete data. Do not use JSON, respond in plain text with markdown formatting.
             """;
 
         var agingText = agingTicketDtos.Any()
-            ? string.Join("\n", agingTicketDtos.Select(t => $"- #{t.TicketId}: \"{t.Title}\" - {t.DaysOpen} días abierto, {t.Status}, asignado a: {t.AssignedTo ?? "nadie"}"))
-            : "No hay tickets con más de 7 días abiertos.";
+            ? string.Join("\n", agingTicketDtos.Select(t => $"- #{t.TicketId}: \"{t.Title}\" - {t.DaysOpen} days open, {t.Status}, assigned to: {t.AssignedTo ?? "nobody"}"))
+            : "There are no tickets open for more than 7 days.";
 
         var patternsText = titleGroups.Any()
-            ? string.Join("\n", titleGroups.Select(p => $"- Patrón: \"{p.Pattern}\" - {p.TicketCount} tickets repetidos"))
-            : "No se detectaron patrones repetitivos claros.";
+            ? string.Join("\n", titleGroups.Select(p => $"- Pattern: \"{p.Pattern}\" - {p.TicketCount} repetitive tickets"))
+            : "No clear repetitive patterns detected.";
 
         var userPrompt = $"""
-            Tickets con más de 7 días abiertos ({agingTicketDtos.Count} tickets):
+            Tickets with more than 7 days open ({agingTicketDtos.Count} tickets):
             {agingText}
 
-            Patrones de tickets repetitivos (últimos 30 días):
+            Recurring patterns in tickets (last 30 days):
             {patternsText}
 
-            Total de tickets: {allTicketsPage.TotalCount}
+            Total tickets: {allTicketsPage.TotalCount}
             """;
 
         var aiRequest = new McpAiRequest
