@@ -10,7 +10,6 @@ namespace TicketsSystem.Core.Validations.UserValidations
         {
             RuleFor(u => u.FullName).NotEmpty().MinimumLength(5);
             RuleFor(u => u.Email).NotEmpty().EmailAddress();
-            RuleFor(u => u.IsActive).NotEmpty();
             RuleFor(u => u.Role).NotEmpty()
                 .Must(role => Enum.TryParse<UserRole>(role, ignoreCase: true, out _))
                 .WithMessage($"Invalid role. Accepted roles: {string.Join(", ", Enum.GetNames<UserRole>())}");

@@ -51,7 +51,7 @@ namespace TicketsSystem.Api.Controllers
 
         [HttpPut("updateuser/{userId}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateUserInformation([FromForm] UserUpdateDto userUpdateDto, string userId)
+        public async Task<IActionResult> UpdateUserInformation([FromBody] UserUpdateDto userUpdateDto, string userId)
             => ProcessResult(await _userService.UpdateUserInformationAsync(userUpdateDto, userId));
 
         [HttpPut("uploadprofilepic/{userId}")]
